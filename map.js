@@ -1,13 +1,14 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const GRID_SIZE = 15;
-const TILE_SIZE = 600 / GRID_SIZE; // Внутренний размер всегда 600px
+
+const GRID_SIZE = 30; // Увеличили карту с 15 до 30 клеток!
+const TILE_SIZE = 40; // Размер одной клетки в пикселях (карта теперь 1200x1200px)
 
 const TILES = {
     ROAD: { color: '#444' },
     BUILDING: { color: '#666' },
     PARK: { color: '#2d5a27' },
-    POINT: { color: '#e6c200' } // Контрольная точка
+    POINT: { color: '#e6c200' }
 };
 
 let gameMap = [];
@@ -29,10 +30,14 @@ function generateMap() {
         gameMap.push(row);
     }
 
+    // Распределяем точки по большой карте
+    addCapturePoint(15, 15); // Центр
+    addCapturePoint(7, 22);
+    addCapturePoint(22, 7);
     addCapturePoint(7, 7);
-    addCapturePoint(3, 11);
-    addCapturePoint(11, 3);
+    addCapturePoint(22, 22);
     
+    // Очищаем зоны баз игроков
     clearBaseArea(0, 0);
     clearBaseArea(GRID_SIZE - 1, GRID_SIZE - 1);
 }
@@ -43,8 +48,8 @@ function addCapturePoint(x, y) {
 }
 
 function clearBaseArea(baseX, baseY) {
-    for(let dy = -1; dy <= 1; dy++) {
-        for(let dx = -1; dx <= 1; dx++) {
+    for(let dy = -2; dy <= 2; dy++) {
+        for(let dx = -2; dx <= 2; dx++) {
             let nx = baseX + dx;
             let ny = baseY + dy;
             if(nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
@@ -77,13 +82,14 @@ function drawMap() {
             ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
     }
+    // Зоны высадки теперь больше (3x3 клетки)
     drawSpawnZone(0, 0, 'rgba(255, 85, 85, 0.3)');
     drawSpawnZone(GRID_SIZE - 1, GRID_SIZE - 1, 'rgba(85, 85, 255, 0.3)');
 }
 
 function drawSpawnZone(x, y, color) {
     ctx.fillStyle = color;
-    let startX = x === 0 ? 0 : x - 1;
-    let startY = y === 0 ? 0 : y - 1;
-    ctx.fillRect(startX * TILE_SIZE, startY * TILE_SIZE, TILE_SIZE * 2, TILE_SIZE * 2);
+    let startX = x === 0 ? 0 : x - 2;
+    let startY = y === 0 ? 0 : y - 2;
+    ctx.fillRect(startX * TILE_SIZE, startY * TILE_SIZE, TILE_SIZE * 3, TILE_SIZE * 3);
 }
