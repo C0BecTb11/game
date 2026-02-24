@@ -1,14 +1,15 @@
 let gameState = {
-    turn: 1,
-    state: 'IDLE',
+    turn: 1, state: 'IDLE',
     players: {
         1: { points: 100, color: '#ff5555' },
         2: { points: 100, color: '#5555ff' }
     },
-    units: [],
-    selectedUnit: null,
-    unitToPlace: null
+    units: [], selectedUnit: null, unitToPlace: null
 };
+
+// --- СИСТЕМА КАМЕРЫ ---
+let camera = { x: 0, y: 0, zoom: 1 };
+let dragState = { isDragging: false, hasMoved: false, startX: 0, startY: 0, camStartX: 0, camStartY: 0 };
 
 function initGame() {
     generateMap();
@@ -24,11 +25,71 @@ function setupControls() {
     document.getElementById('buy-supply').onclick = () => prepareBuy('SUPPLY');
     document.getElementById('buy-btr').onclick = () => prepareBuy('BTR');
     document.getElementById('buy-tank').onclick = () => prepareBuy('TANK');
-
     document.getElementById('end-turn').onclick = endTurn;
-    canvas.addEventListener('pointerdown', handleMapClick);
+
+    // Зум
+    document.getElementById('zoom-in').onclick = () => setZoom(1.2);
+    document.getElementById('zoom-out').onclick = () => setZoom(1 / 1.2);
+
+    // Управление мышью и касаниями
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    
+    // Колесико мыши
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        setZoom(e.deltaY > 0 ? (1/1.1) : 1.1);
+    }, { passive: false });
 }
 
+function setZoom(factor) {
+    camera.zoom *= factor;
+    camera.zoom = Math.max(0.4, Math.min(camera.zoom, 2.5)); // Ограничитель зума
+    renderAll();
+}
+
+// --- ЛОГИКА СКРОЛЛА КАРТЫ ---
+function onPointerDown(e) {
+    dragState.isDragging = true;
+    dragState.hasMoved = false;
+    dragState.startX = e.clientX;
+    dragState.startY = e.clientY;
+    dragState.camStartX = camera.x;
+    dragState.camStartY = camera.y;
+    canvas.setPointerCapture(e.pointerId);
+}
+
+function onPointerMove(e) {
+    if (!dragState.isDragging) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+
+    // Если палец сдвинулся больше чем на 5 пикселей — это перетаскивание, а не клик
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragState.hasMoved = true;
+
+    if (dragState.hasMoved) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        // Двигаем камеру в обратную сторону
+        camera.x = dragState.camStartX - (dx * scaleX) / camera.zoom;
+        camera.y = dragState.camStartY - (dy * scaleY) / camera.zoom;
+        renderAll();
+    }
+}
+
+function onPointerUp(e) {
+    if (!dragState.isDragging) return;
+    dragState.isDragging = false;
+    canvas.releasePointerCapture(e.pointerId);
+
+    if (!dragState.hasMoved) {
+        handleMapClick(e); // Если не тащили карту, значит кликнули
+    }
+}
+
+// --- ИГРОВАЯ ЛОГИКА ---
 function prepareBuy(typeKey) {
     const type = UNIT_TYPES[typeKey];
     if (gameState.players[gameState.turn].points >= type.cost) {
@@ -36,9 +97,7 @@ function prepareBuy(typeKey) {
         gameState.state = 'PLACING_UNIT';
         gameState.selectedUnit = null;
         alert(`Куплен: ${type.name}. Кликни на свою базу (зону высадки)!`);
-    } else {
-        alert("Не хватает очков снабжения!");
-    }
+    } else alert("Не хватает очков снабжения!");
 }
 
 function handleMapClick(e) {
@@ -46,13 +105,20 @@ function handleMapClick(e) {
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
+    // Координаты пикселей с учетом CSS
     const clickX = (e.clientX - rect.left) * scaleX;
     const clickY = (e.clientY - rect.top) * scaleY;
 
-    const x = Math.floor(clickX / TILE_SIZE);
-    const y = Math.floor(clickY / TILE_SIZE);
+    // Высчитываем реальные мировые координаты с учетом зума и сдвига камеры!
+    const worldX = (clickX / camera.zoom) + camera.x;
+    const worldY = (clickY / camera.zoom) + camera.y;
+
+    // Переводим в клетки
+    const x = Math.floor(worldX / TILE_SIZE);
+    const y = Math.floor(worldY / TILE_SIZE);
+
+    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return; // Клик за картой
     
-    // 1. Логика размещения нового юнита
     if (gameState.state === 'PLACING_UNIT' && gameState.unitToPlace) {
         if (isValidSpawn(x, y, gameState.turn)) {
             gameState.players[gameState.turn].points -= gameState.unitToPlace.cost;
@@ -63,39 +129,24 @@ function handleMapClick(e) {
             gameState.unitToPlace = null;
             gameState.state = 'IDLE';
             updateUI();
-        } else {
-            alert("Ставить можно только на свободную клетку своей базы!");
-        }
+        } else alert("Ставить можно только на свободную клетку своей базы!");
         renderAll();
         return;
     }
 
     const clickedUnit = getUnitAt(x, y);
 
-    // 2. Логика управления (Ходьба / Атака)
     if (gameState.selectedUnit) {
-        // Кликнули на врага
         if (clickedUnit && clickedUnit.owner !== gameState.turn) {
             attackUnit(gameState.selectedUnit, clickedUnit);
-        } 
-        // Кликнули на пустую клетку
-        else if (!clickedUnit) {
-            // Если попытались пойти в зону хода - идем
+        } else if (!clickedUnit) {
             const dist = Math.abs(gameState.selectedUnit.x - x) + Math.abs(gameState.selectedUnit.y - y);
-            if (dist <= gameState.selectedUnit.type.moveRange) {
-                moveUnit(gameState.selectedUnit, x, y);
-            } else {
-                // Если кликнули слишком далеко - просто снимаем выделение
-                gameState.selectedUnit = null;
-                gameState.state = 'IDLE';
-            }
-        } 
-        // Кликнули на своего другого юнита (переключаем выбор)
-        else if (clickedUnit.owner === gameState.turn) {
+            if (dist <= gameState.selectedUnit.type.moveRange) moveUnit(gameState.selectedUnit, x, y);
+            else { gameState.selectedUnit = null; gameState.state = 'IDLE'; }
+        } else if (clickedUnit.owner === gameState.turn) {
             gameState.selectedUnit = clickedUnit.hasMoved ? null : clickedUnit;
         }
     } else {
-        // 3. Выбор юнита, если никто не был выбран
         if (clickedUnit && clickedUnit.owner === gameState.turn && !clickedUnit.hasMoved) {
             gameState.selectedUnit = clickedUnit;
             gameState.state = 'SELECTED';
@@ -106,8 +157,8 @@ function handleMapClick(e) {
 
 function isValidSpawn(x, y, playerID) {
     if (getUnitAt(x, y)) return false;
-    if (playerID === 1) return x <= 1 && y <= 1;
-    if (playerID === 2) return x >= GRID_SIZE - 2 && y >= GRID_SIZE - 2;
+    if (playerID === 1) return x <= 2 && y <= 2; // Зона высадки 3x3
+    if (playerID === 2) return x >= GRID_SIZE - 3 && y >= GRID_SIZE - 3;
     return false;
 }
 
@@ -125,9 +176,7 @@ function attackUnit(attacker, target) {
         attacker.hasMoved = true;
         gameState.selectedUnit = null; gameState.state = 'IDLE';
         if (target.hp <= 0) gameState.units = gameState.units.filter(u => u !== target);
-    } else {
-        alert("Враг слишком далеко для выстрела!");
-    }
+    } else alert("Враг слишком далеко для выстрела!");
 }
 
 function endTurn() {
@@ -146,7 +195,6 @@ function endTurn() {
     gameState.unitToPlace = null;
 
     gameState.units.forEach(u => { if (u.owner === gameState.turn) u.hasMoved = false; });
-
     updateUI();
     renderAll();
 }
@@ -159,25 +207,29 @@ function updateUI() {
     turnInd.className = gameState.turn === 1 ? 'turn-p1' : 'turn-p2';
 }
 
-// === САМАЯ ВАЖНАЯ ЧАСТЬ: ОТРИСОВКА ===
+// === ОТРИСОВКА С УЧЕТОМ КАМЕРЫ ===
 function renderAll() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.save(); // Сохраняем начальное состояние холста
+    
+    // Применяем зум и сдвиг камеры
+    ctx.scale(camera.zoom, camera.zoom);
+    ctx.translate(-camera.x, -camera.y);
+
     drawMap();
     
-    // 1. ПОДСВЕТКА ЗОНЫ ХОДА И АТАКИ
     if (gameState.selectedUnit && !gameState.selectedUnit.hasMoved) {
         for (let ty = 0; ty < GRID_SIZE; ty++) {
             for (let tx = 0; tx < GRID_SIZE; tx++) {
                 let dist = Math.abs(gameState.selectedUnit.x - tx) + Math.abs(gameState.selectedUnit.y - ty);
                 let unitOnTile = getUnitAt(tx, ty);
                 
-                // Зона ходьбы (синим), если клетка пустая
                 if (dist <= gameState.selectedUnit.type.moveRange && !unitOnTile) {
                     ctx.fillStyle = 'rgba(0, 200, 255, 0.3)';
                     ctx.fillRect(tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
                 
-                // Цель для атаки (красным), если враг в радиусе стрельбы
                 if (dist <= gameState.selectedUnit.type.attackRange && unitOnTile && unitOnTile.owner !== gameState.turn) {
                     ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
                     ctx.fillRect(tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -186,30 +238,24 @@ function renderAll() {
         }
     }
 
-    // 2. ВЫДЕЛЕНИЕ ВЫБРАННОГО ЮНИТА
     if (gameState.selectedUnit) {
-        ctx.fillStyle = 'rgba(255, 255, 0, 0.5)'; // Желтый фон под юнитом
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
         ctx.fillRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        ctx.strokeStyle = '#ffff00'; // Желтая рамка
+        ctx.strokeStyle = '#ffff00';
         ctx.lineWidth = 3;
         ctx.strokeRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         ctx.lineWidth = 1;
     }
 
-    // 3. ОТРИСОВКА ВСЕХ ЮНИТОВ
     gameState.units.forEach(u => {
         let img = loadedImages[u.type.id];
-        
-        // Проверяем, существует ли картинка и загрузилась ли она успешно
         if (img && img.complete && img.naturalWidth > 0) {
             ctx.drawImage(img, u.x * TILE_SIZE + 4, u.y * TILE_SIZE + 4, TILE_SIZE - 8, TILE_SIZE - 8);
         } else {
-            // ФОЛБЭК: Если картинки нет, рисуем цветной кружок
-            ctx.fillStyle = '#444'; // Темно-серый фон
+            ctx.fillStyle = '#444';
             ctx.beginPath();
             ctx.arc(u.x * TILE_SIZE + TILE_SIZE/2, u.y * TILE_SIZE + TILE_SIZE/2, TILE_SIZE/2.5, 0, Math.PI*2);
             ctx.fill();
-            // Первая буква юнита
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
@@ -217,26 +263,23 @@ function renderAll() {
             ctx.fillText(u.type.name.charAt(0), u.x * TILE_SIZE + TILE_SIZE/2, u.y * TILE_SIZE + TILE_SIZE/2);
         }
 
-        // Полоска здоровья (красная подложка, зеленое хп)
         ctx.fillStyle = '#cc0000';
         ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 10, TILE_SIZE - 8, 5);
         ctx.fillStyle = '#00cc00';
         let hpWidth = Math.max(0, (u.hp / u.type.maxHp) * (TILE_SIZE - 8));
         ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 10, hpWidth, 5);
         
-        // Маленький маркер цвета игрока (чтобы точно отличать своих от чужих)
         ctx.fillStyle = gameState.players[u.owner].color;
         ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 16, 10, 5);
 
-        // Если юнит уже походил — затемняем его
         if (u.hasMoved) {
             ctx.fillStyle = 'rgba(0,0,0,0.6)';
             ctx.fillRect(u.x * TILE_SIZE, u.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
     });
+
+    ctx.restore(); // Возвращаем холст в исходное состояние для следующего кадра
 }
 
-window.onload = () => {
-    preloadUnitImages(() => { initGame(); });
-};
-      
+window.onload = () => { preloadUnitImages(() => { initGame(); }); };
+                
