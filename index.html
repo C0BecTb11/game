@@ -1,1 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пошаговая Стратегия</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <header id="top-bar">
+            <div class="player-stat player-1">
+                Игрок 1 (Красные) | Очки: <span id="p1-points">100</span>
+            </div>
+            <div id="turn-indicator" class="turn-p1">
+                Ход Игрока 1
+            </div>
+            <div class="player-stat player-2">
+                Игрок 2 (Синие) | Очки: <span id="p2-points">100</span>
+            </div>
+        </header>
+
+        <div id="main-area">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+            <aside id="shop">
+                <h3>Запрос подкрепления</h3>
+                <div class="shop-items">
+                    <button id="buy-soldier" class="btn">Пехота (50)</button>
+                    <button id="buy-rpk" class="btn">Пулемет (80)</button>
+                    <button id="buy-rpg" class="btn">Гранатомет (100)</button>
+                    <button id="buy-supply" class="btn">Снабжение (120)</button>
+                    <button id="buy-btr" class="btn">БТР (250)</button>
+                    <button id="buy-tank" class="btn">Танк (500)</button>
+                </div>
+                <div id="action-panel">
+                    <button id="end-turn" class="btn-primary">Завершить ход</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="unit.js"></script>
+    <script src="map.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
 
