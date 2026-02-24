@@ -7,6 +7,7 @@ const UNIT_TYPES = {
     TANK: { id: 'tank', name: "Танк", imgSrc: "./images/team-r-tank.png", cost: 500, maxHp: 50, attack: 12, attackRange: 4, moveRange: 3, canCapture: false }
 };
 
+// Глобальный объект для хранения загруженных картинок
 const loadedImages = {};
 
 function preloadUnitImages(callback) {
@@ -18,7 +19,8 @@ function preloadUnitImages(callback) {
         const img = new Image();
         img.src = UNIT_TYPES[key].imgSrc;
         img.onload = () => {
-            loadedImages[key] = img;
+            // ИСПРАВЛЕНО: Сохраняем картинку по точному id ('soldier', 'rpk' и т.д.)
+            loadedImages[UNIT_TYPES[key].id] = img; 
             loadedCount++;
             if (loadedCount === keys.length) callback();
         };
