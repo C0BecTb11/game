@@ -119,3 +119,48 @@ button:active { background-color: #666; }
     .shop-items { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
     .shop-items button { flex: 1 1 30%; min-width: 90px; }
 }
+
+/* --- ПАНЕЛЬ ИНФОРМАЦИИ О ЮНИТЕ --- */
+#unit-info {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: rgba(20, 20, 20, 0.85); /* Темный полупрозрачный фон */
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #fff;
+    font-size: 0.9rem;
+    pointer-events: none; /* Клики будут проходить сквозь неё на карту */
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.7);
+    transition: opacity 0.2s;
+    backdrop-filter: blur(3px); /* Легкое размытие фона под панелью */
+}
+
+#unit-info.hidden {
+    display: none;
+}
+
+#ui-name {
+    font-weight: bold;
+    border-bottom: 1px solid #555;
+    padding-bottom: 3px;
+    text-align: center;
+    font-size: 1rem;
+    text-shadow: 1px 1px 2px #000;
+}
+
+.ui-stats {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.ui-stats div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
