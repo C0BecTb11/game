@@ -244,3 +244,30 @@ button:active { background-color: #666; }
     padding: 15px 40px;
     width: auto;
 }
+
+/* --- ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ О БОЕ --- */
+#combat-notification {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    /* Центрируем по горизонтали */
+    transform: translateX(-50%); 
+    background-color: rgba(20, 20, 20, 0.9);
+    border: 1px solid #ffaa00;
+    border-radius: 6px;
+    padding: 8px 15px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: bold;
+    pointer-events: none; /* Клики будут проходить сквозь неё на карту */
+    z-index: 100;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    /* Плавная анимация появления и исчезновения */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#combat-notification.hidden {
+    opacity: 0;
+    /* При скрытии уезжает чуть вверх */
+    transform: translate(-50%, -15px); 
+}
