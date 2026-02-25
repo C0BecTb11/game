@@ -26,6 +26,20 @@
 
     <div id="game-container" class="hidden">
         <header id="top-bar">
+                <div id="game-container" class="hidden">
+        
+        <div id="disconnect-screen" class="hidden">
+            <div class="disconnect-content">
+                <h2>⚠️ Связь потеряна!</h2>
+                <p>Противник отключился от игры или свернул браузер.</p>
+                <p>Ожидаем переподключения...</p>
+                <div class="loader"></div>
+                <button id="btn-surrender-disconnect" style="margin-top: 20px; background-color: #ff4444;">Покинуть бой</button>
+            </div>
+        </div>
+
+        <header id="top-bar">
+            
             <div class="player-stat player-1">Красные: <span id="p1-points">100</span> 💰</div>
             <div id="turn-indicator" class="turn-p1">ОЖИДАНИЕ...</div>
             <div class="player-stat player-2">Синие: <span id="p2-points">100</span> 💰</div>
@@ -78,9 +92,13 @@
     </div>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="db.js?update=200"></script>
-    <script src="unit.js?update=200"></script>
-    <script src="map.js?update=200"></script>
-    <script src="game.js?update=200"></script>
+    
+    <script src="presence.js?update=400"></script> 
+    
+    <script src="db.js?update=400"></script>
+    <script src="unit.js?update=400"></script>
+    <script src="map.js?update=400"></script>
+    <script src="game.js?update=400"></script>
 </body>
 </html>
+
