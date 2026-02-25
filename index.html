@@ -12,6 +12,7 @@
         <p>Командир, выберите зону высадки:</p>
         <button id="btn-main-map" class="btn-primary">Основная карта (60x60)</button>
         <button id="btn-test-map" style="background-color: #f57c00; border-color: #e65100;">Тестовый полигон (10x10)</button>
+        <button id="btn-menu-help" style="margin-top: 20px; background-color: #444;">📖 Полевой Устав</button>
     </div>
 
     <div id="turn-buffer" class="hidden">
@@ -26,16 +27,15 @@
             <div class="player-stat player-1">Красные: <span id="p1-points">100</span> 💰</div>
             <div id="turn-indicator" class="turn-p1">Ход Игрока 1</div>
             <div class="player-stat player-2">Синие: <span id="p2-points">100</span> 💰</div>
+            <button id="btn-game-help" title="Энциклопедия">📖</button>
         </header>
 
         <div id="main-area">
             <div class="canvas-wrapper">
                 <canvas id="gameCanvas" width="600" height="600"></canvas>
-                
                 <div id="combat-notification" class="hidden">
                     💥 Урон: <span id="notif-dmg">0</span> | 🎯 <span id="notif-hp">Осталось: 0</span>
                 </div>
-
                 <div id="camera-controls">
                     <button id="zoom-in">➕</button>
                     <button id="zoom-out">➖</button>
@@ -64,6 +64,41 @@
                 </div>
                 <button id="end-turn" class="btn-primary">Завершить ход</button>
             </aside>
+        </div>
+    </div>
+
+    <div id="encyclopedia-modal" class="hidden">
+        <div class="modal-content">
+            <button id="btn-close-help" class="close-btn">❌</button>
+            <h2>📖 ПОЛЕВОЙ УСТАВ</h2>
+            
+            <div class="help-section">
+                <h3>💰 Экономика и Базы</h3>
+                <p>Базовый доход каждый ход: <b>+20 💰</b>.<br>
+                Захват желтых контрольных точек дает еще <b>+15 💰</b> за каждую. Точки может захватывать только пехота (Солдат, Пулемет, РПГ).</p>
+            </div>
+
+            <div class="help-section">
+                <h3>🗺️ Местность и Укрытия</h3>
+                <ul>
+                    <li><b>🌊 Река:</b> Непроходима для всех войск. Ищите мосты!</li>
+                    <li><b>🏭 Здания и Заводы:</b> Техника (Танки, БТР) не может в них заехать. Пехота может свободно перемещаться внутри.</li>
+                    <li><b>👀 Линия видимости:</b> Здания блокируют обзор. Танк на улице не видит, что происходит в глубине завода.</li>
+                    <li><b>🔫 Стрельба по зданиям:</b> Нельзя прострелить здание насквозь. Однако, если пехота стоит с "краю" здания (у окна), она может стрелять на улицу, но и техника сможет выстрелить в ответ!</li>
+                </ul>
+            </div>
+
+            <div class="help-section">
+                <h3>🪖 Арсенал (Юниты)</h3>
+                <table class="help-table">
+                    <tr><td><b>Пехота (50 💰)</b></td><td>Базовый боец. Идеален для захвата точек и разведки зданий.</td></tr>
+                    <tr><td><b>Пулемет (80 💰)</b></td><td>Гроза пехоты! Медленный, но наносит огромный урон (5 ⚔️) мягким целям.</td></tr>
+                    <tr><td><b>Гранатометчик (100 💰)</b></td><td>Убийца техники. Базовый урон всего 2, но <b>пробивает броню на +13 урона</b> (итого 15 ⚔️ по танкам и БТР). Прячьте его в зданиях!</td></tr>
+                    <tr><td><b>Снабжение (120 💰)</b></td><td>Грузовик без оружия. Самый быстрый юнит и лучший разведчик (Видит на 6 клеток).</td></tr>
+                    <tr><td><b>БТР (250 💰)</b></td><td>Быстрая легкая бронетехника. Отличный компромисс между скоростью и огневой мощью.</td></tr>
+                    <tr><td><b>Танк (500 💰)</b></td><td>Тяжелая броня. Огромный урон (12 ⚔️) и дальность стрельбы, но уязвим для засад из РПГ.</td></tr>
+                </table>
+            </div>
         </div>
     </div>
 
