@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-        <div id="main-menu">
+    <div id="main-menu">
         <h1>Urban Tactics</h1>
         <p>Командир, выберите режим игры:</p>
         
@@ -23,11 +23,11 @@
             
             <div style="display: flex; gap: 5px;">
                 <input type="number" id="join-lobby-id" placeholder="Код игры" style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #222; color: white;">
-                <button id="btn-join-online" style="background-color: #388e3c; border-color: #2e7d32; padding: 10px 20px;">Войти</button>
+                <button id="btn-join-online" style="background-color: #388e3c; border-color: #2e7d32; padding: 10px 20px; border-radius: 5px; color: white; cursor: pointer;">Войти</button>
             </div>
         </div>
 
-        <button id="btn-menu-help" style="margin-top: 20px; background-color: #444;">📖 Полевой Устав</button>
+        <button id="btn-menu-help" style="margin-top: 20px; background-color: #444; padding: 10px 20px; border-radius: 5px; color: white; border: 1px solid #666; cursor: pointer;">📖 Полевой Устав</button>
     </div>
 
     <div id="turn-buffer" class="hidden">
@@ -42,7 +42,7 @@
             <div class="player-stat player-1">Красные: <span id="p1-points">100</span> 💰</div>
             <div id="turn-indicator" class="turn-p1">Ход Игрока 1</div>
             <div class="player-stat player-2">Синие: <span id="p2-points">100</span> 💰</div>
-            <button id="btn-game-help" title="Энциклопедия">📖</button>
+            <button id="btn-game-help" title="Энциклопедия" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">📖</button>
         </header>
 
         <div id="main-area">
@@ -90,7 +90,7 @@
             <div class="help-section">
                 <h3>💰 Экономика и Базы</h3>
                 <p>Базовый доход каждый ход: <b>+20 💰</b>.<br>
-                Захват желтых контрольных точек дает еще <b>+15 💰</b> за каждую. Точки может захватывать только пехота (Солдат, Пулемет, РПГ).</p>
+                Захват желтых контрольных точек дает еще <b>+15 💰</b> за каждую. Точки может захватывать только пехота.</p>
             </div>
 
             <div class="help-section">
@@ -98,25 +98,30 @@
                 <ul>
                     <li><b>🌊 Река:</b> Непроходима для всех войск. Ищите мосты!</li>
                     <li><b>🏭 Здания и Заводы:</b> Техника (Танки, БТР) не может в них заехать. Пехота может свободно перемещаться внутри.</li>
-                    <li><b>👀 Линия видимости:</b> Здания блокируют обзор. Танк на улице не видит, что происходит в глубине завода.</li>
-                    <li><b>🔫 Стрельба по зданиям:</b> Нельзя прострелить здание насквозь. Однако, если пехота стоит с "краю" здания (у окна), она может стрелять на улицу, но и техника сможет выстрелить в ответ!</li>
+                    <li><b>🌳 Леса (Темные пятна):</b> Скрывают войска и блокируют линию видимости. Танки там слепы.</li>
+                    <li><b>🛡️ Укрытия:</b> Пехота в Зданиях и Лесу получает на 50% меньше урона!</li>
+                    <li><b>👀 Линия видимости:</b> Здания и Леса блокируют обзор. Нельзя стрелять сквозь препятствия.</li>
                 </ul>
             </div>
 
             <div class="help-section">
                 <h3>🪖 Арсенал (Юниты)</h3>
                 <table class="help-table">
-                    <tr><td><b>Пехота (50 💰)</b></td><td>Базовый боец. Идеален для захвата точек и разведки зданий.</td></tr>
-                    <tr><td><b>Пулемет (80 💰)</b></td><td>Гроза пехоты! Медленный, но наносит огромный урон (5 ⚔️) мягким целям.</td></tr>
-                    <tr><td><b>Гранатометчик (100 💰)</b></td><td>Убийца техники. Базовый урон всего 2, но <b>пробивает броню на +13 урона</b> (итого 15 ⚔️ по танкам и БТР). Прячьте его в зданиях!</td></tr>
-                    <tr><td><b>Снабжение (120 💰)</b></td><td>Грузовик без оружия. Самый быстрый юнит и лучший разведчик (Видит на 6 клеток).</td></tr>
-                    <tr><td><b>БТР (250 💰)</b></td><td>Быстрая легкая бронетехника. Отличный компромисс между скоростью и огневой мощью.</td></tr>
-                    <tr><td><b>Танк (500 💰)</b></td><td>Тяжелая броня. Огромный урон (12 ⚔️) и дальность стрельбы, но уязвим для засад из РПГ.</td></tr>
+                    <tr><td><b>Пехота (50)</b></td><td>Базовый боец. Захват точек и разведка.</td></tr>
+                    <tr><td><b>Пулемет (80)</b></td><td>Гроза пехоты. Урон 5 ⚔️ по мягким целям.</td></tr>
+                    <tr><td><b>Гранатомет (100)</b></td><td>Убийца техники. Базовый урон 2, но <b>+13 по броне</b> (итого 15 ⚔️).</td></tr>
+                    <tr><td><b>Снабжение (120)</b></td><td>Грузовик без оружия. Лучший разведчик (Видит на 6 клеток).</td></tr>
+                    <tr><td><b>БТР (250)</b></td><td>Быстрая легкая бронетехника. Дальность хода 4.</td></tr>
+                    <tr><td><b>Танк (500)</b></td><td>Тяжелая броня. Урон 12 ⚔️ и огромная дальность стрельбы.</td></tr>
                 </table>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="db.js"></script>
+    
     <script src="unit.js"></script>
     <script src="map.js"></script>
     <script src="game.js"></script>
