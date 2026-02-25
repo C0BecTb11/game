@@ -516,7 +516,7 @@ function renderAll() {
     }
 
     gameState.units.forEach(u => {
-        // НОВОЕ: Прячем врагов, если МЫ их не видим
+        // Прячем врагов, если МЫ их не видим
         if (u.owner !== viewPlayer && !visibleMap[u.y][u.x]) return;
 
         let img = loadedImages[u.type.id];
@@ -531,4 +531,23 @@ function renderAll() {
             ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillT
+            ctx.fillText(u.type.name.charAt(0), u.x * TILE_SIZE + TILE_SIZE/2, u.y * TILE_SIZE + TILE_SIZE/2);
+        }
+
+        ctx.fillStyle = '#cc0000';
+        ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 10, TILE_SIZE - 8, 5);
+        ctx.fillStyle = '#00cc00';
+        let hpWidth = Math.max(0, (u.hp / u.type.maxHp) * (TILE_SIZE - 8));
+        ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 10, hpWidth, 5);
+        
+        ctx.fillStyle = gameState.players[u.owner].color;
+        ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 16, 10, 5);
+
+        if (u.hasMoved) {
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(u.x * TILE_SIZE, u.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+    });
+
+    ctx.restore(); 
+}
