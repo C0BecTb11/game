@@ -44,6 +44,11 @@ function initControls() {
     document.getElementById('zoom-in').onclick = () => setZoom(1.2);
     document.getElementById('zoom-out').onclick = () => setZoom(1 / 1.2);
 
+        const helpModal = document.getElementById('encyclopedia-modal');
+    document.getElementById('btn-menu-help').onclick = () => helpModal.classList.remove('hidden');
+    document.getElementById('btn-game-help').onclick = () => helpModal.classList.remove('hidden');
+    document.getElementById('btn-close-help').onclick = () => helpModal.classList.add('hidden');
+
     canvas.addEventListener('pointerdown', onPointerDown);
     canvas.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
