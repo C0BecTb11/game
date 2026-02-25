@@ -7,11 +7,26 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="main-menu">
+        <div id="main-menu">
         <h1>Urban Tactics</h1>
-        <p>Командир, выберите зону высадки:</p>
-        <button id="btn-main-map" class="btn-primary">Основная карта (60x60)</button>
-        <button id="btn-test-map" style="background-color: #f57c00; border-color: #e65100;">Тестовый полигон (10x10)</button>
+        <p>Командир, выберите режим игры:</p>
+        
+        <div style="border: 1px solid #444; padding: 15px; border-radius: 8px; margin-bottom: 15px; width: 320px; text-align: center;">
+            <h3 style="color: #aaa; margin-bottom: 10px;">Локальная игра (1 телефон)</h3>
+            <button id="btn-main-map" class="btn-primary" style="width: 100%; margin-bottom: 10px;">Основная карта (60x60)</button>
+            <button id="btn-test-map" style="background-color: #f57c00; border-color: #e65100; width: 100%;">Тестовый полигон (10x10)</button>
+        </div>
+
+        <div style="border: 1px solid #115293; padding: 15px; border-radius: 8px; width: 320px; text-align: center; background-color: rgba(25, 118, 210, 0.1);">
+            <h3 style="color: #64b5f6; margin-bottom: 10px;">Онлайн игра</h3>
+            <button id="btn-create-online" class="btn-primary" style="background-color: #1976d2; border-color: #115293; width: 100%; margin-bottom: 10px;">Создать онлайн игру</button>
+            
+            <div style="display: flex; gap: 5px;">
+                <input type="number" id="join-lobby-id" placeholder="Код игры" style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #222; color: white;">
+                <button id="btn-join-online" style="background-color: #388e3c; border-color: #2e7d32; padding: 10px 20px;">Войти</button>
+            </div>
+        </div>
+
         <button id="btn-menu-help" style="margin-top: 20px; background-color: #444;">📖 Полевой Устав</button>
     </div>
 
