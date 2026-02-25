@@ -543,4 +543,18 @@ function renderAll() {
 
         ctx.fillStyle = '#cc0000';
         ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 10, TILE_SIZE - 8, 5);
-        ctx.fillS
+        ctx.fillStyle = '#00cc00';
+        let hpWidth = Math.max(0, (u.hp / u.type.maxHp) * (TILE_SIZE - 8));
+        ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 10, hpWidth, 5);
+        
+        ctx.fillStyle = gameState.players[u.owner].color;
+        ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 16, 10, 5);
+
+        if (u.hasMoved) {
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(u.x * TILE_SIZE, u.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+    });
+
+    ctx.restore(); 
+}
