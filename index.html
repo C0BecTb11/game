@@ -7,8 +7,34 @@
     <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
+        <div id="auth-screen" class="hidden">
+        <div class="auth-box">
+            <h1 style="text-align: center; color: #ff5555; text-shadow: 2px 2px 0px #5555ff; margin-bottom: 20px;">URBAN TACTICS</h1>
+
+            <div id="login-form">
+                <h2 style="margin-bottom: 15px; text-align: center;">Авторизация</h2>
+                <input type="text" id="login-username" class="auth-input" placeholder="Имя пользователя">
+                <input type="password" id="login-password" class="auth-input" placeholder="Пароль">
+                <button id="btn-login" class="btn-primary" style="margin-top: 10px;">Войти</button>
+                <p style="text-align: center; margin-top: 15px;">Нет аккаунта? <a href="#" id="link-to-register" style="color: #64b5f6;">Создать</a></p>
+            </div>
+
+            <div id="register-form" class="hidden">
+                <h2 style="margin-bottom: 15px; text-align: center;">Регистрация</h2>
+                <input type="text" id="reg-username" class="auth-input" placeholder="Имя пользователя">
+                <input type="password" id="reg-password" class="auth-input" placeholder="Пароль (минимум 6 символов)">
+                <input type="password" id="reg-password-confirm" class="auth-input" placeholder="Повторите пароль">
+                <button id="btn-register" class="btn-primary" style="margin-top: 10px;">Зарегистрироваться</button>
+                <p style="text-align: center; margin-top: 15px;">Уже есть аккаунт? <a href="#" id="link-to-login" style="color: #64b5f6;">Войти</a></p>
+            </div>
+        </div>
+        </div>
+    
     <div id="main-menu">
         <h1>Urban Tactics</h1>
+                <h2 id="menu-player-name" style="color: #ffaa00; margin-bottom: 10px;">Приветствую, Командир!</h2>
+        <button onclick="logout()" style="background-color: transparent; border: 1px solid #ff4444; color: #ff4444; margin-bottom: 20px;">Выйти из аккаунта</button>
+        
         <p>Командир, подключитесь к серверу:</p>
 
         <div style="border: 1px solid #115293; padding: 15px; border-radius: 8px; width: 320px; text-align: center; background-color: rgba(25, 118, 210, 0.1);">
