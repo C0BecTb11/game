@@ -65,14 +65,12 @@ function onPointerMove(e) {
     const dx = e.clientX - dragState.startX;
     const dy = e.clientY - dragState.startY;
 
-    // Если палец сдвинулся больше чем на 5 пикселей — это перетаскивание, а не клик
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragState.hasMoved = true;
 
     if (dragState.hasMoved) {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
-        // Двигаем камеру в обратную сторону
         camera.x = dragState.camStartX - (dx * scaleX) / camera.zoom;
         camera.y = dragState.camStartY - (dy * scaleY) / camera.zoom;
         renderAll();
@@ -97,6 +95,7 @@ function prepareBuy(typeKey) {
         gameState.state = 'PLACING_UNIT';
         gameState.selectedUnit = null;
         alert(`Куплен: ${type.name}. Кликни на свою базу (зону высадки)!`);
+        updateUI(); // Обновляем UI, чтобы скрыть панельку юнита
     } else alert("Не хватает очков снабжения!");
 }
 
@@ -105,19 +104,16 @@ function handleMapClick(e) {
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
-    // Координаты пикселей с учетом CSS
     const clickX = (e.clientX - rect.left) * scaleX;
     const clickY = (e.clientY - rect.top) * scaleY;
 
-    // Высчитываем реальные мировые координаты с учетом зума и сдвига камеры!
     const worldX = (clickX / camera.zoom) + camera.x;
     const worldY = (clickY / camera.zoom) + camera.y;
 
-    // Переводим в клетки
     const x = Math.floor(worldX / TILE_SIZE);
     const y = Math.floor(worldY / TILE_SIZE);
 
-    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return; // Клик за картой
+    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return; 
     
     if (gameState.state === 'PLACING_UNIT' && gameState.unitToPlace) {
         if (isValidSpawn(x, y, gameState.turn)) {
@@ -130,7 +126,6 @@ function handleMapClick(e) {
             gameState.state = 'IDLE';
             updateUI();
         } else alert("Ставить можно только на свободную клетку своей базы!");
-        updateUI();
         renderAll();
         return;
     }
@@ -153,12 +148,14 @@ function handleMapClick(e) {
             gameState.state = 'SELECTED';
         }
     }
+    
+    updateUI(); // Вызываем обновление панели
     renderAll();
 }
 
 function isValidSpawn(x, y, playerID) {
     if (getUnitAt(x, y)) return false;
-    if (playerID === 1) return x <= 2 && y <= 2; // Зона высадки 3x3
+    if (playerID === 1) return x <= 2 && y <= 2; 
     if (playerID === 2) return x >= GRID_SIZE - 3 && y >= GRID_SIZE - 3;
     return false;
 }
@@ -196,11 +193,12 @@ function endTurn() {
     gameState.unitToPlace = null;
 
     gameState.units.forEach(u => { if (u.owner === gameState.turn) u.hasMoved = false; });
+    
     updateUI();
     renderAll();
 }
 
-function updateUI() {
+// --- НОВАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ИНТЕРФЕЙСА ---
 function updateUI() {
     document.getElementById('p1-points').innerText = gameState.players[1].points;
     document.getElementById('p2-points').innerText = gameState.players[2].points;
@@ -208,32 +206,30 @@ function updateUI() {
     turnInd.innerText = `Ход Игрока ${gameState.turn}`;
     turnInd.className = gameState.turn === 1 ? 'turn-p1' : 'turn-p2';
 
-    // --- НОВАЯ ЛОГИКА ДЛЯ ПАНЕЛИ ИНФОРМАЦИИ ---
     const panel = document.getElementById('unit-info');
-    if (gameState.selectedUnit) {
-        const u = gameState.selectedUnit;
-        
-        // Вставляем данные юнита
-        document.getElementById('ui-name').innerText = u.type.name;
-        document.getElementById('ui-name').style.color = gameState.players[u.owner].color; // Цвет имени (красный/синий)
-        document.getElementById('ui-hp').innerText = `${u.hp}/${u.type.maxHp}`;
-        document.getElementById('ui-atk').innerText = u.type.attack;
-        document.getElementById('ui-move').innerText = u.type.moveRange;
-        document.getElementById('ui-range').innerText = u.type.attackRange;
-        
-        panel.classList.remove('hidden'); // Показываем панель
-    } else {
-        panel.classList.add('hidden'); // Прячем панель, если никто не выбран
+    // Защита от ошибок, если элемент еще не загрузился
+    if (panel) {
+        if (gameState.selectedUnit) {
+            const u = gameState.selectedUnit;
+            document.getElementById('ui-name').innerText = u.type.name;
+            document.getElementById('ui-name').style.color = gameState.players[u.owner].color;
+            document.getElementById('ui-hp').innerText = `${u.hp}/${u.type.maxHp}`;
+            document.getElementById('ui-atk').innerText = u.type.attack;
+            document.getElementById('ui-move').innerText = u.type.moveRange;
+            document.getElementById('ui-range').innerText = u.type.attackRange;
+            
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
     }
 }
 
-// === ОТРИСОВКА С УЧЕТОМ КАМЕРЫ ===
+// --- ОТРИСОВКА ---
 function renderAll() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    ctx.save(); // Сохраняем начальное состояние холста
-    
-    // Применяем зум и сдвиг камеры
+    ctx.save(); 
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-camera.x, -camera.y);
 
@@ -298,8 +294,8 @@ function renderAll() {
         }
     });
 
-    ctx.restore(); // Возвращаем холст в исходное состояние для следующего кадра
+    ctx.restore(); 
 }
 
 window.onload = () => { preloadUnitImages(() => { initGame(); }); };
-                
+        
