@@ -211,3 +211,36 @@ button:active { background-color: #666; }
 .hidden {
     display: none !important;
 }
+
+/* --- ЭКРАН ПЕРЕДАЧИ ХОДА --- */
+#turn-buffer {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle, #222 0%, #000 100%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+#turn-buffer h2 {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+#turn-buffer p {
+    font-size: 1.2rem;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+#turn-buffer button {
+    font-size: 1.5rem;
+    padding: 15px 40px;
+    width: auto;
+}
