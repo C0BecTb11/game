@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
-        <div id="auth-screen" class="hidden">
+    
+    <div id="auth-screen" class="hidden">
         <div class="auth-box">
             <h1 style="text-align: center; color: #ff5555; text-shadow: 2px 2px 0px #5555ff; margin-bottom: 20px;">URBAN TACTICS</h1>
 
@@ -28,11 +29,11 @@
                 <p style="text-align: center; margin-top: 15px;">Уже есть аккаунт? <a href="#" id="link-to-login" style="color: #64b5f6;">Войти</a></p>
             </div>
         </div>
-        </div>
+    </div>
     
     <div id="main-menu">
         <h1>Urban Tactics</h1>
-                <h2 id="menu-player-name" style="color: #ffaa00; margin-bottom: 10px;">Приветствую, Командир!</h2>
+        <h2 id="menu-player-name" style="color: #ffaa00; margin-bottom: 10px;">Приветствую, Командир!</h2>
         <button onclick="logout()" style="background-color: transparent; border: 1px solid #ff4444; color: #ff4444; margin-bottom: 20px;">Выйти из аккаунта</button>
         
         <p>Командир, подключитесь к серверу:</p>
@@ -51,8 +52,6 @@
     </div>
 
     <div id="game-container" class="hidden">
-        <header id="top-bar">
-                <div id="game-container" class="hidden">
         
         <div id="disconnect-screen" class="hidden">
             <div class="disconnect-content">
@@ -117,13 +116,12 @@
     </div>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="db.js?update=900"></script>
-    <script src="auth.js?update=900"></script>
-    <script src="unit.js?update=900"></script>
-    <script src="map.js?update=900"></script>
-    
-    <script src="render.js?update=900"></script> 
-    
-    <script src="game.js?update=900"></script>
+    <script src="db.js?update=999"></script>
+    <script src="auth.js?update=999"></script>
+    <script src="unit.js?update=999"></script>
+    <script src="map.js?update=999"></script>
+    <script src="presence.js?update=999"></script>
+    <script src="render.js?update=999"></script> 
+    <script src="game.js?update=999"></script>
 </body>
 </html>
