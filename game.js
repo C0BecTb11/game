@@ -19,26 +19,32 @@ function startGame(mapType, networkData = null) {
         camera.y = (GRID_SIZE * TILE_SIZE) - 600;
     }
 
-    // Если мы Игрок 2 и загружаем готовую игру с сервера
+    // Достаем красивый ник из нашей новой системы авторизации!
+    let myName = window.currentUser ? window.currentUser.user_metadata.display_name : `Игрок ${window.myPlayerId}`;
+
     if (networkData) {
         window.applyNetworkState(networkData.gameState, networkData.gameMap, networkData.capturePoints);
+        
+        // НОВОЕ: Если зашел Игрок 2 (гость), он вписывает СВОЕ ИМЯ в игру и отправляет создателю!
+        if (window.myPlayerId === 2 && gameState.players[2].name === 'Ожидание...') {
+            gameState.players[2].name = myName;
+            if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
+            updateUI();
+        }
     } 
-    // Если мы Игрок 1, генерируем всё с нуля
     else {
+        // НОВОЕ: Игрок 1 генерирует игру и сразу вписывает свое имя, а для второго ставит "Ожидание..."
         gameState = {
             turn: 1, state: 'IDLE',
             players: {
-                1: { points: 100, color: '#ff5555' },
-                2: { points: 100, color: '#5555ff' }
+                1: { points: 100, color: '#ff5555', name: myName },
+                2: { points: 100, color: '#5555ff', name: 'Ожидание...' }
             },
             units: [], selectedUnit: null, unitToPlace: null
         };
         generateMap(mapType);
         
-        // СРАЗУ отправляем сгенерированную карту на сервер, чтобы Игрок 2 её скачал!
-        if (window.sendTurnToDatabase) {
-            window.sendTurnToDatabase(gameState, gameMap, capturePoints);
-        }
+        if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
         updateUI();
         renderAll();
     }
@@ -436,13 +442,23 @@ function endTurn() {
 }
 
 function updateUI() {
+function updateUI() {
     document.getElementById('p1-points').innerText = gameState.players[1].points;
     document.getElementById('p2-points').innerText = gameState.players[2].points;
+    
+    // НОВОЕ: Выводим имена игроков на верхнюю панель!
+    const p1NameElem = document.getElementById('p1-name');
+    const p2NameElem = document.getElementById('p2-name');
+    if (p1NameElem && gameState.players[1].name) p1NameElem.innerText = gameState.players[1].name;
+    if (p2NameElem && gameState.players[2].name) p2NameElem.innerText = gameState.players[2].name;
+
     const turnInd = document.getElementById('turn-indicator');
     
     if (gameState.turn === window.myPlayerId) {
         turnInd.innerText = "ВАШ ХОД";
         turnInd.className = window.myPlayerId === 1 ? 'turn-p1' : 'turn-p2';
+        turnInd.style.border = '';
+        turnInd.style.color = '';
     } else {
         turnInd.innerText = "ХОД ПРОТИВНИКА...";
         turnInd.className = '';
