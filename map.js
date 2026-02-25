@@ -31,7 +31,7 @@ function generateMap(mapType) {
     }
 }
 
-// === ГЕНЕРАТОР ГИГАНТСКОЙ ОСНОВНОЙ КАРТЫ ===
+// === ГЕНЕРАТОР ГИГАНТСКОЙ СИММЕТРИЧНОЙ КАРТЫ ===
 function generateOrganicMainMap() {
     // 1. Заливаем всё лесом/пустошью
     for (let y = 0; y < GRID_SIZE; y++) {
@@ -42,71 +42,113 @@ function generateOrganicMainMap() {
         gameMap.push(row);
     }
 
-    // 2. Река стала шире и длиннее
+    // 2. Река (Симметричная синусоида)
     for (let x = 0; x < GRID_SIZE; x++) {
-        let riverY = Math.floor(GRID_SIZE / 2 + Math.sin(x / 6) * 6); 
+        // Настраиваем фазу, чтобы изгибы реки были одинаковыми для обеих сторон
+        let riverY = Math.floor(GRID_SIZE / 2 + Math.sin((x - GRID_SIZE/2) / 8) * 5); 
         if (riverY >= 0 && riverY < GRID_SIZE) gameMap[riverY][x].type = TILES.WATER;
         if (riverY + 1 >= 0 && riverY + 1 < GRID_SIZE) gameMap[riverY + 1][x].type = TILES.WATER;
-        if (riverY + 2 >= 0 && riverY + 2 < GRID_SIZE) gameMap[riverY + 2][x].type = TILES.WATER; // 3 клетки в ширину
+        if (riverY + 2 >= 0 && riverY + 2 < GRID_SIZE) gameMap[riverY + 2][x].type = TILES.WATER;
     }
 
-    // 3. Широкая центральная трасса
-    let mainRoadX = Math.floor(GRID_SIZE / 2) - 3;
+    // 3. Широкая центральная трасса (Мост)
+    let mainRoadX = Math.floor(GRID_SIZE / 2) - 1;
     for (let y = 0; y < GRID_SIZE; y++) {
         gameMap[y][mainRoadX].type = TILES.ROAD;
         gameMap[y][mainRoadX + 1].type = TILES.ROAD;
         gameMap[y][mainRoadX + 2].type = TILES.ROAD;
-        
-        // Большой мост через реку
-        if (gameMap[y][mainRoadX].type === TILES.WATER || gameMap[y][mainRoadX+1].type === TILES.WATER) {
-            gameMap[y][mainRoadX].type = TILES.ROAD; 
-            gameMap[y][mainRoadX+1].type = TILES.ROAD;
-            gameMap[y][mainRoadX+2].type = TILES.ROAD;
-        }
     }
 
-    // 4. Огромная индустриальная зона (18 комплексов вместо 6)
-    for(let i = 0; i < 18; i++) {
-        let w = 4 + Math.floor(Math.random() * 6); // Ширина цеха от 4 до 9
-        let h = 3 + Math.floor(Math.random() * 5); // Высота от 3 до 7
-        let startX = Math.floor(Math.random() * (GRID_SIZE - w));
+    // Вспомогательная функция: проверяет, свободна ли зона от важных объектов
+    function isAreaFree(startX, startY, w, h) {
+        // Защитная зона вокруг баз игроков (радиус 10 клеток)
+        if (startX < 10 && startY < 10) return false;
+        if (startX + w > GRID_SIZE - 10 && startY + h > GRID_SIZE - 10) return false;
+
+        // Защитная зона вдоль главной дороги (чтобы не блокировать мост и проезд)
+        if (startX + w >= mainRoadX - 2 && startX <= mainRoadX + 4) return false;
+
+        // Проверка наложения на реку или другие здания
+        for(let dy = 0; dy < h; dy++) {
+            for(let dx = 0; dx < w; dx++) {
+                let ny = startY + dy;
+                let nx = startX + dx;
+                if (ny < 0 || ny >= GRID_SIZE || nx < 0 || nx >= GRID_SIZE) return false;
+                let t = gameMap[ny][nx].type;
+                if (t === TILES.WATER || t === TILES.BUILDING || t === TILES.FACTORY) return false; 
+            }
+        }
+        return true;
+    }
+
+    // 4. Индустриальные зоны (Генерируем зеркально)
+    let factoriesToPlace = 8; // 8 пар = 16 заводов на карте
+    let attempts = 0;
+    while (factoriesToPlace > 0 && attempts < 200) {
+        attempts++;
+        let w = 4 + Math.floor(Math.random() * 5); // Ширина от 4 до 8
+        let h = 3 + Math.floor(Math.random() * 4); // Высота от 3 до 6
+        
+        // Генерируем координаты только для ВЕРХНЕЙ ЛЕВОЙ половины карты
+        let startX = Math.floor(Math.random() * (GRID_SIZE / 2 - w));
         let startY = Math.floor(Math.random() * (GRID_SIZE - h));
 
-        if (gameMap[startY][startX].type !== TILES.WATER) {
+        if (isAreaFree(startX, startY, w, h)) {
+            // Строим завод для Игрока 1 (сверху-слева)
             for(let dy = 0; dy < h; dy++) {
                 for(let dx = 0; dx < w; dx++) {
                     gameMap[startY + dy][startX + dx].type = TILES.FACTORY;
                 }
             }
-            if (startY > 0) gameMap[startY - 1][startX + Math.floor(w/2)].type = TILES.ROAD;
-        }
-    }
-
-    // 5. Разбросанные постройки (150 мелких зданий)
-    for(let i = 0; i < 150; i++) {
-        let rx = Math.floor(Math.random() * GRID_SIZE);
-        let ry = Math.floor(Math.random() * GRID_SIZE);
-        
-        if (gameMap[ry][rx].type === TILES.PARK) {
-            gameMap[ry][rx].type = TILES.BUILDING;
-            if (Math.random() > 0.5 && rx > 0 && gameMap[ry][rx-1].type === TILES.PARK) {
-                gameMap[ry][rx-1].type = TILES.ROAD;
+            // Высчитываем координаты для зеркального завода Игрока 2 (снизу-справа)
+            let mirrorX = GRID_SIZE - startX - w;
+            let mirrorY = GRID_SIZE - startY - h;
+            for(let dy = 0; dy < h; dy++) {
+                for(let dx = 0; dx < w; dx++) {
+                    gameMap[mirrorY + dy][mirrorX + dx].type = TILES.FACTORY;
+                }
             }
+            factoriesToPlace--;
         }
     }
 
-    // 6. Расставляем 7 стратегических точек
-    addCapturePoint(mainRoadX + 1, Math.floor(GRID_SIZE/2)); // Точка на мосту!
-    addCapturePoint(10, 10); 
-    addCapturePoint(GRID_SIZE - 10, GRID_SIZE - 10);
-    addCapturePoint(mainRoadX + 15, 15);
-    addCapturePoint(mainRoadX - 15, GRID_SIZE - 15);
-    addCapturePoint(15, GRID_SIZE - 15);
-    addCapturePoint(GRID_SIZE - 15, 15);
+    // 5. Разбросанные постройки (Также генерируем парами)
+    let buildingsToPlace = 60; // 60 пар = 120 зданий
+    attempts = 0;
+    while (buildingsToPlace > 0 && attempts < 500) {
+        attempts++;
+        let rx = Math.floor(Math.random() * (GRID_SIZE / 2));
+        let ry = Math.floor(Math.random() * GRID_SIZE);
 
-    // 7. Базы игроков (расчищаем площадки 5x5)
-    clearBaseArea(2, 2, 3);
-    clearBaseArea(GRID_SIZE - 3, GRID_SIZE - 3, 3);
+        if (isAreaFree(rx, ry, 1, 1)) { 
+            gameMap[ry][rx].type = TILES.BUILDING;
+            
+            let mirrorX = GRID_SIZE - rx - 1;
+            let mirrorY = GRID_SIZE - ry - 1;
+            gameMap[mirrorY][mirrorX].type = TILES.BUILDING;
+            
+            buildingsToPlace--;
+        }
+    }
+
+    // 6. Расставляем стратегические точки (Абсолютно симметрично)
+    addCapturePoint(mainRoadX + 1, Math.floor(GRID_SIZE/2)); // Центральная на мосту
+    
+    // Ближние точки
+    addCapturePoint(10, 15);
+    addCapturePoint(49, 44); // 59 - 10 = 49, 59 - 15 = 44
+    
+    // Фланговые точки у реки
+    addCapturePoint(18, 5);
+    addCapturePoint(41, 54);
+    
+    // Дальние обходные точки
+    addCapturePoint(25, 38);
+    addCapturePoint(34, 21);
+
+    // 7. Базы игроков (Гарантированно расчищаем бетонные площадки 9x9)
+    clearBaseArea(2, 2, 4);
+    clearBaseArea(GRID_SIZE - 3, GRID_SIZE - 3, 4);
 }
 
 // Тестовая площадка остается 10x10
