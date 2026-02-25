@@ -10,8 +10,15 @@
     <div id="main-menu">
         <h1>Urban Tactics</h1>
         <p>Командир, выберите зону высадки:</p>
-        <button id="btn-main-map" class="btn-primary">Основная карта (30x30)</button>
+        <button id="btn-main-map" class="btn-primary">Основная карта (60x60)</button>
         <button id="btn-test-map" style="background-color: #f57c00; border-color: #e65100;">Тестовый полигон (10x10)</button>
+    </div>
+
+    <div id="turn-buffer" class="hidden">
+        <h2 id="buffer-title">Ход Игрока</h2>
+        <p>Передайте устройство следующему командиру.</p>
+        <p>Карта скрыта для сохранения секретности.</p>
+        <button id="btn-start-turn" class="btn-primary" style="margin-top: 20px;">Начать ход</button>
     </div>
 
     <div id="game-container" class="hidden">
@@ -24,7 +31,6 @@
         <div id="main-area">
             <div class="canvas-wrapper">
                 <canvas id="gameCanvas" width="600" height="600"></canvas>
-                
                 <div id="camera-controls">
                     <button id="zoom-in">➕</button>
                     <button id="zoom-out">➖</button>
@@ -42,7 +48,7 @@
                     </div>
                 </div>
 
-                <h3>Штаб (Заказ войск)</h3>
+                <h3>Штаб (Заказ)</h3>
                 <div class="shop-items">
                     <button id="buy-soldier">Пехота (50)</button>
                     <button id="buy-rpk">Пулемет (80)</button>
