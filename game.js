@@ -150,35 +150,58 @@ function onPointerUp(e) {
 function isOpaque(x, y) {
     if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return true;
     let type = gameMap[y][x].type;
-    return type === TILES.BUILDING || type === TILES.FACTORY || type === TILES.PARK;
+    return type === TILES.BUILDING || type === TILES.FACTORY;
 }
 
-function checkLineOfSight(x0, y0, x1, y1) {
-    let dx = Math.abs(x1 - x0);
-    let dy = Math.abs(y1 - y0);
-    let sx = (x0 < x1) ? 1 : -1;
-    let sy = (y0 < y1) ? 1 : -1;
-    let err = dx - dy;
-    let cx = x0;
-    let cy = y0;
-    let isInsideBuilding = isOpaque(x0, y0); 
-    let leftBuilding = false; 
+function checkLineOfSight(x0, y0, x1, y1, unit = null) {
+    if (x0 === x1 && y0 === y1) return true;
 
-    while (true) {
+    let isInsideBuilding = isOpaque(x0, y0);
+    let leftBuilding = false;
+    let adjacentWallPassed = false; 
+    
+    // Проверяем, техника ли это (если юнит передан)
+    let isVehicle = unit ? (unit.type.isArmor || unit.type.id === 'supply') : false;
+
+    // Используем плотный алгоритм DDA, чтобы луч не проскальзывал сквозь углы
+    let steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2;
+    let checkedTiles = new Set();
+    checkedTiles.add(`${x0},${y0}`);
+
+    for (let i = 1; i <= steps; i++) {
+        let t = i / steps;
+        let cx = Math.round(x0 + (x1 - x0) * t);
+        let cy = Math.round(y0 + (y1 - y0) * t);
+
+        let key = `${cx},${cy}`;
+        if (checkedTiles.has(key)) continue;
+        checkedTiles.add(key);
+
+        // Если это сама цель (например, край здания) - мы её видим!
         if (cx === x1 && cy === y1) return true; 
-        if (cx !== x0 || cy !== y0) {
-            let currentOpaque = isOpaque(cx, cy);
-            if (isInsideBuilding) {
-                if (!currentOpaque) leftBuilding = true; 
-                else if (leftBuilding) return false; 
-            } else {
-                if (currentOpaque) return false; 
+
+        let currentOpaque = isOpaque(cx, cy);
+
+        if (isInsideBuilding) {
+            // Если мы УЖЕ внутри здания и смотрим наружу
+            if (!currentOpaque) leftBuilding = true;
+            else if (leftBuilding) return false; // Вышли из здания и уперлись в новое
+        } else {
+            // Если смотрим СНАРУЖИ на здание
+            if (currentOpaque) {
+                // Если стена находится на соседней от нас клетке (вплотную)
+                let isAdjacent = Math.abs(cx - x0) <= 1 && Math.abs(cy - y0) <= 1;
+                
+                // Пехота может "заглянуть в окно" (пропустить 1 тайл стены), техника — нет
+                if (isAdjacent && !adjacentWallPassed && !isVehicle) {
+                    adjacentWallPassed = true; 
+                } else {
+                    return false; // Взгляд/выстрел заблокирован!
+                }
             }
         }
-        let e2 = 2 * err;
-        if (e2 > -dy) { err -= dy; cx += sx; }
-        if (e2 < dx) { err += dx; cy += sy; }
     }
+    return true;
 }
 
 function getVisibleMap() {
@@ -364,7 +387,8 @@ function moveUnit(unit, x, y) {
 function attackUnit(attacker, target) {
     const dist = Math.abs(attacker.x - target.x) + Math.abs(attacker.y - target.y);
     if (dist <= attacker.type.attackRange) {
-        if (!checkLineOfSight(attacker.x, attacker.y, target.x, target.y)) {
+        // Передаем attacker, чтобы система знала, кто именно пытается выстрелить
+        if (!checkLineOfSight(attacker.x, attacker.y, target.x, target.y, attacker)) {
             alert("Нет линии видимости!");
             return;
         }
