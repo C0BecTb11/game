@@ -32,7 +32,7 @@ async function createOnlineLobby(mapType) {
             window.isOnlineGame = true;
             window.myPlayerId = 1; 
             
-            // --- НОВОЕ: ЗАПОМИНАЕМ РОЛЬ В ПАМЯТИ ---
+            // ЗАПОМИНАЕМ РОЛЬ В ПАМЯТИ
             localStorage.setItem('urban_room', window.currentLobbyId);
             localStorage.setItem('urban_role', 1);
             
@@ -73,21 +73,28 @@ async function joinOnlineLobby(lobbyId) {
         window.currentLobbyId = lobbyId;
         window.isOnlineGame = true;
         
-        // --- НОВОЕ: УМНОЕ ВОССТАНОВЛЕНИЕ РОЛИ ---
         let savedRoom = localStorage.getItem('urban_room');
         let savedRole = localStorage.getItem('urban_role');
         let myName = window.currentUser ? window.currentUser.user_metadata.display_name : null;
 
+        // ИСПРАВЛЕННАЯ СТРОЧКА: Безопасный поиск внутри gameState
+        let isPlayer1ByAccount = false;
+        if (data.game_state && data.game_state.gameState && data.game_state.gameState.players) {
+            if (data.game_state.gameState.players[1].name === myName) {
+                isPlayer1ByAccount = true;
+            }
+        }
+
         if (savedRoom == lobbyId && savedRole) {
             // Восстанавливаем из памяти телефона
             window.myPlayerId = parseInt(savedRole); 
-        } else if (data.game_state && data.game_state.players[1] && data.game_state.players[1].name === myName) {
-            // Восстанавливаем по никнейму аккаунта (если зашли с другого устройства)
+        } else if (isPlayer1ByAccount) {
+            // Восстанавливаем по никнейму аккаунта
             window.myPlayerId = 1;
             localStorage.setItem('urban_room', lobbyId);
             localStorage.setItem('urban_role', 1);
         } else {
-            // Если ничего не совпало - мы Игрок 2
+            // Иначе мы точно Игрок 2
             window.myPlayerId = 2; 
             localStorage.setItem('urban_room', lobbyId);
             localStorage.setItem('urban_role', 2);
@@ -98,7 +105,6 @@ async function joinOnlineLobby(lobbyId) {
         startGame(data.map_type, data.game_state);
         subscribeToRealtime(); 
         
-        // Передаем правильный ID в радары
         if (window.initPresence) window.initPresence(lobbyId, window.myPlayerId);
 
     } catch (error) { alert("Ошибка при подключении: " + error.message); }
