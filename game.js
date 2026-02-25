@@ -130,8 +130,8 @@ function handleMapClick(e) {
             gameState.state = 'IDLE';
             updateUI();
         } else alert("Ставить можно только на свободную клетку своей базы!");
-        renderAll();
         updateUI();
+        renderAll();
         return;
     }
 
@@ -201,21 +201,21 @@ function endTurn() {
 }
 
 function updateUI() {
-    // Обновление очков и хода
+function updateUI() {
     document.getElementById('p1-points').innerText = gameState.players[1].points;
     document.getElementById('p2-points').innerText = gameState.players[2].points;
     const turnInd = document.getElementById('turn-indicator');
     turnInd.innerText = `Ход Игрока ${gameState.turn}`;
     turnInd.className = gameState.turn === 1 ? 'turn-p1' : 'turn-p2';
 
-    // Обновление виджета информации о юните
+    // --- НОВАЯ ЛОГИКА ДЛЯ ПАНЕЛИ ИНФОРМАЦИИ ---
     const panel = document.getElementById('unit-info');
     if (gameState.selectedUnit) {
         const u = gameState.selectedUnit;
-        document.getElementById('ui-name').innerText = u.type.name;
-        // Красим имя юнита в цвет его владельца (красный или синий)
-        document.getElementById('ui-name').style.color = gameState.players[u.owner].color;
         
+        // Вставляем данные юнита
+        document.getElementById('ui-name').innerText = u.type.name;
+        document.getElementById('ui-name').style.color = gameState.players[u.owner].color; // Цвет имени (красный/синий)
         document.getElementById('ui-hp').innerText = `${u.hp}/${u.type.maxHp}`;
         document.getElementById('ui-atk').innerText = u.type.attack;
         document.getElementById('ui-move').innerText = u.type.moveRange;
