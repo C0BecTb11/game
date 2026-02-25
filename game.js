@@ -209,6 +209,7 @@ function getVisibleMap() {
     let spawnZone = GRID_SIZE === 10 ? 1 : 4;
     let viewPlayer = window.myPlayerId;
     
+    // 1. Зона видимости вокруг спавна
     for(let y=0; y<GRID_SIZE; y++){
         for(let x=0; x<GRID_SIZE; x++){
             if (viewPlayer === 1 && x <= spawnZone+2 && y <= spawnZone+2) vis[y][x] = true;
@@ -216,10 +217,10 @@ function getVisibleMap() {
         }
     }
     
+    // 2. Видимость от каждого юнита
     gameState.units.forEach(u => {
         if (u.owner === viewPlayer) {
             let v = u.type.visionRange;
-            let isVehicle = u.type.isArmor || u.type.id === 'supply'; // Узнаем, техника ли это
             
             for(let dy = -v; dy <= v; dy++){
                 for(let dx = -v; dx <= v; dx++){
@@ -227,16 +228,12 @@ function getVisibleMap() {
                     if(nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
                         if(Math.abs(dx) + Math.abs(dy) <= v) {
                             
-                            // === ВОЗВРАЩАЕМ ЛОГИКУ ТЕХНИКИ ===
-                            let targetType = gameMap[ny][nx].type;
-                            let isBuilding = targetType === TILES.BUILDING || targetType === TILES.FACTORY;
-                            
-                            // Если юнит - техника, а целевая клетка - здание, то техника туда не смотрит
-                            if (isVehicle && isBuilding) {
-                                continue; 
+                            // Вот здесь вся магия 3 шага!
+                            // Мы убрали лишние проверки и просто передаем сам юнит (u) пятым параметром
+                            if (checkLineOfSight(u.x, u.y, nx, ny, u)) {
+                                vis[ny][nx] = true;
                             }
-
-                            if (checkLineOfSight(u.x, u.y, nx, ny)) vis[ny][nx] = true;
+                            
                         }
                     }
                 }
@@ -244,6 +241,7 @@ function getVisibleMap() {
         }
     });
     
+    // 3. Видимость вокруг захваченных точек
     capturePoints.forEach(pt => {
         if (pt.owner === viewPlayer) {
             for(let dy = -1; dy <= 1; dy++){
