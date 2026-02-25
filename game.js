@@ -131,6 +131,7 @@ function handleMapClick(e) {
             updateUI();
         } else alert("Ставить можно только на свободную клетку своей базы!");
         renderAll();
+        updateUI();
         return;
     }
 
