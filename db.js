@@ -20,7 +20,6 @@ async function createOnlineLobby(mapType) {
     if (!window.supabaseServer) return;
 
     try {
-        // Создаем пустую комнату
         const { data, error } = await window.supabaseServer
             .from('lobbies')
             .insert([{ map_type: mapType, status: 'waiting' }])
@@ -33,18 +32,21 @@ async function createOnlineLobby(mapType) {
             window.isOnlineGame = true;
             window.myPlayerId = 1; 
             
+            // --- НОВОЕ: ЗАПОМИНАЕМ РОЛЬ В ПАМЯТИ ---
+            localStorage.setItem('urban_room', window.currentLobbyId);
+            localStorage.setItem('urban_role', 1);
+            
             alert(`🔥 Комната создана!\nКод: ${window.currentLobbyId}\nСкинь его другу.`);
             
             startGame(mapType); 
-            subscribeToRealtime(); // Включаем "уши"
+            subscribeToRealtime(); 
             
-            // НОВОЕ: ЗАПУСКАЕМ СЛЕЖКУ ЗА ИНТЕРНЕТОМ (Мы - Игрок 1)
             if (window.initPresence) window.initPresence(window.currentLobbyId, 1);
         }
     } catch (error) { alert("Критическая ошибка: " + error.message); }
 }
 
-// === ПОДКЛЮЧЕНИЕ К ИГРЕ (ИГРОК 2) ===
+// === ПОДКЛЮЧЕНИЕ К ИГРЕ (ИГРОК 2 ИЛИ ПЕРЕПОДКЛЮЧЕНИЕ) ===
 async function joinOnlineLobby(lobbyId) {
     if (!window.supabaseServer) return;
 
@@ -57,13 +59,10 @@ async function joinOnlineLobby(lobbyId) {
 
         if (error || !data) { alert("❌ Комната не найдена! Проверь код."); return; }
         
-        // НОВОЕ: РАЗРЕШАЕМ ПЕРЕПОДКЛЮЧЕНИЕ! 
-        // Пускаем в игру, даже если она уже 'playing' (если игрок вылетел и заходит обратно)
         if (data.status !== 'waiting' && data.status !== 'playing') { 
             alert("⚠️ Игра уже завершена!"); return; 
         }
 
-        // Если это первый вход — меняем статус комнаты
         if (data.status === 'waiting') {
             await window.supabaseServer
                 .from('lobbies')
@@ -73,15 +72,34 @@ async function joinOnlineLobby(lobbyId) {
 
         window.currentLobbyId = lobbyId;
         window.isOnlineGame = true;
-        window.myPlayerId = 2; 
         
-        alert("✅ Успешное подключение! Загружаем данные сервера...");
+        // --- НОВОЕ: УМНОЕ ВОССТАНОВЛЕНИЕ РОЛИ ---
+        let savedRoom = localStorage.getItem('urban_room');
+        let savedRole = localStorage.getItem('urban_role');
+        let myName = window.currentUser ? window.currentUser.user_metadata.display_name : null;
+
+        if (savedRoom == lobbyId && savedRole) {
+            // Восстанавливаем из памяти телефона
+            window.myPlayerId = parseInt(savedRole); 
+        } else if (data.game_state && data.game_state.players[1] && data.game_state.players[1].name === myName) {
+            // Восстанавливаем по никнейму аккаунта (если зашли с другого устройства)
+            window.myPlayerId = 1;
+            localStorage.setItem('urban_room', lobbyId);
+            localStorage.setItem('urban_role', 1);
+        } else {
+            // Если ничего не совпало - мы Игрок 2
+            window.myPlayerId = 2; 
+            localStorage.setItem('urban_room', lobbyId);
+            localStorage.setItem('urban_role', 2);
+        }
+        
+        alert(`✅ Вы подключились как Игрок ${window.myPlayerId}!`);
         
         startGame(data.map_type, data.game_state);
         subscribeToRealtime(); 
         
-        // НОВОЕ: ЗАПУСКАЕМ СЛЕЖКУ ЗА ИНТЕРНЕТОМ (Мы - Игрок 2)
-        if (window.initPresence) window.initPresence(lobbyId, 2);
+        // Передаем правильный ID в радары
+        if (window.initPresence) window.initPresence(lobbyId, window.myPlayerId);
 
     } catch (error) { alert("Ошибка при подключении: " + error.message); }
 }
