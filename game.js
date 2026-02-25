@@ -196,11 +196,23 @@ function getVisibleMap() {
     gameState.units.forEach(u => {
         if (u.owner === viewPlayer) {
             let v = u.type.visionRange;
+            let isVehicle = u.type.isArmor || u.type.id === 'supply'; // Узнаем, техника ли это
+            
             for(let dy = -v; dy <= v; dy++){
                 for(let dx = -v; dx <= v; dx++){
                     let nx = u.x + dx, ny = u.y + dy;
                     if(nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
                         if(Math.abs(dx) + Math.abs(dy) <= v) {
+                            
+                            // === ВОЗВРАЩАЕМ ЛОГИКУ ТЕХНИКИ ===
+                            let targetType = gameMap[ny][nx].type;
+                            let isBuilding = targetType === TILES.BUILDING || targetType === TILES.FACTORY;
+                            
+                            // Если юнит - техника, а целевая клетка - здание, то техника туда не смотрит
+                            if (isVehicle && isBuilding) {
+                                continue; 
+                            }
+
                             if (checkLineOfSight(u.x, u.y, nx, ny)) vis[ny][nx] = true;
                         }
                     }
