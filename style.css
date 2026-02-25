@@ -166,3 +166,48 @@ button:active { background-color: #666; }
     .shop-items { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
     .shop-items button { flex: 1 1 30%; min-width: 90px; }
 }
+
+/* --- ГЛАВНОЕ МЕНЮ --- */
+#main-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    gap: 20px;
+    background: radial-gradient(circle, #333 0%, #111 100%);
+}
+
+#main-menu h1 {
+    font-size: 3rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: 3px 3px 0px #ff5555, -3px -3px 0px #5555ff; /* Эффект 3D/Глитч */
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+#main-menu p {
+    font-size: 1.2rem;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+#main-menu button {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    width: 300px;
+    border-radius: 8px;
+    transition: transform 0.1s;
+}
+
+#main-menu button:active {
+    transform: scale(0.95);
+}
+
+/* Универсальный класс скрытия */
+.hidden {
+    display: none !important;
+}
