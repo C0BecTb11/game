@@ -181,11 +181,27 @@ function moveUnit(unit, x, y) {
 function attackUnit(attacker, target) {
     const dist = Math.abs(attacker.x - target.x) + Math.abs(attacker.y - target.y);
     if (dist <= attacker.type.attackRange) {
-        target.hp -= attacker.type.attack;
+        
+        // Считаем финальный урон
+        let finalDamage = attacker.type.attack;
+        
+        // Проверяем: если у атакующего есть бонус по броне, а цель — бронированная
+        if (attacker.type.bonusArmorDamage && target.type.isArmor) {
+            finalDamage += attacker.type.bonusArmorDamage;
+            console.log(`Пробитие брони! Урон: ${finalDamage}`);
+        }
+
+        target.hp -= finalDamage;
         attacker.hasMoved = true;
-        gameState.selectedUnit = null; gameState.state = 'IDLE';
-        if (target.hp <= 0) gameState.units = gameState.units.filter(u => u !== target);
-    } else alert("Враг слишком далеко для выстрела!");
+        gameState.selectedUnit = null; 
+        gameState.state = 'IDLE';
+        
+        if (target.hp <= 0) {
+            gameState.units = gameState.units.filter(u => u !== target);
+        }
+    } else {
+        alert("Враг слишком далеко для выстрела!");
+    }
 }
 
 function endTurn() {
@@ -223,7 +239,14 @@ function updateUI() {
             document.getElementById('ui-name').innerText = u.type.name;
             document.getElementById('ui-name').style.color = gameState.players[u.owner].color;
             document.getElementById('ui-hp').innerText = `${u.hp}/${u.type.maxHp}`;
-            document.getElementById('ui-atk').innerText = u.type.attack;
+            
+            // Если у юнита есть бонус по броне, показываем его в интерфейсе
+            let attackText = u.type.attack;
+            if (u.type.bonusArmorDamage) {
+                attackText = `${u.type.attack} (Броня: ${u.type.attack + u.type.bonusArmorDamage})`;
+            }
+            document.getElementById('ui-atk').innerText = attackText;
+            
             document.getElementById('ui-move').innerText = u.type.moveRange;
             document.getElementById('ui-range').innerText = u.type.attackRange;
             
