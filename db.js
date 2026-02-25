@@ -20,7 +20,7 @@ async function createOnlineLobby(mapType) {
     if (!window.supabaseServer) return;
 
     try {
-        // Создаем пустую комнату (без game_state пока что)
+        // Создаем пустую комнату
         const { data, error } = await window.supabaseServer
             .from('lobbies')
             .insert([{ map_type: mapType, status: 'waiting' }])
@@ -35,9 +35,11 @@ async function createOnlineLobby(mapType) {
             
             alert(`🔥 Комната создана!\nКод: ${window.currentLobbyId}\nСкинь его другу.`);
             
-            // Запускаем карту. Игрок 1 сам сгенерирует карту и (в будущем) отправит её в БД
             startGame(mapType); 
             subscribeToRealtime(); // Включаем "уши"
+            
+            // НОВОЕ: ЗАПУСКАЕМ СЛЕЖКУ ЗА ИНТЕРНЕТОМ (Мы - Игрок 1)
+            if (window.initPresence) window.initPresence(window.currentLobbyId, 1);
         }
     } catch (error) { alert("Критическая ошибка: " + error.message); }
 }
@@ -54,12 +56,20 @@ async function joinOnlineLobby(lobbyId) {
             .single();
 
         if (error || !data) { alert("❌ Комната не найдена! Проверь код."); return; }
-        if (data.status !== 'waiting') { alert("⚠️ Игра уже началась!"); return; }
+        
+        // НОВОЕ: РАЗРЕШАЕМ ПЕРЕПОДКЛЮЧЕНИЕ! 
+        // Пускаем в игру, даже если она уже 'playing' (если игрок вылетел и заходит обратно)
+        if (data.status !== 'waiting' && data.status !== 'playing') { 
+            alert("⚠️ Игра уже завершена!"); return; 
+        }
 
-        await window.supabaseServer
-            .from('lobbies')
-            .update({ status: 'playing' })
-            .eq('id', lobbyId);
+        // Если это первый вход — меняем статус комнаты
+        if (data.status === 'waiting') {
+            await window.supabaseServer
+                .from('lobbies')
+                .update({ status: 'playing' })
+                .eq('id', lobbyId);
+        }
 
         window.currentLobbyId = lobbyId;
         window.isOnlineGame = true;
@@ -67,18 +77,19 @@ async function joinOnlineLobby(lobbyId) {
         
         alert("✅ Успешное подключение! Загружаем данные сервера...");
         
-        // ВАЖНО: Передаем скачанный game_state (включая карту) в игру
         startGame(data.map_type, data.game_state);
-        subscribeToRealtime(); // Включаем "уши"
+        subscribeToRealtime(); 
+        
+        // НОВОЕ: ЗАПУСКАЕМ СЛЕЖКУ ЗА ИНТЕРНЕТОМ (Мы - Игрок 2)
+        if (window.initPresence) window.initPresence(lobbyId, 2);
 
     } catch (error) { alert("Ошибка при подключении: " + error.message); }
 }
 
-// === НОВОЕ: ОТПРАВКА ДАННЫХ НА СЕРВЕР ===
+// === ОТПРАВКА ДАННЫХ НА СЕРВЕР ===
 window.sendTurnToDatabase = async function(state, mapData, pointsData) {
     if (!window.isOnlineGame || !window.supabaseServer) return;
     
-    // Упаковываем всё состояние игры и саму карту в один пакет
     const fullPayload = {
         gameState: state,
         gameMap: mapData,
@@ -91,7 +102,7 @@ window.sendTurnToDatabase = async function(state, mapData, pointsData) {
         .eq('id', window.currentLobbyId);
 };
 
-// === НОВОЕ: ПРОСЛУШКА ИЗМЕНЕНИЙ (ВЕБ-СОКЕТЫ) ===
+// === ПРОСЛУШКА ИЗМЕНЕНИЙ (ВЕБ-СОКЕТЫ) ===
 function subscribeToRealtime() {
     window.supabaseServer
         .channel('room_' + window.currentLobbyId)
@@ -102,8 +113,6 @@ function subscribeToRealtime() {
             filter: `id=eq.${window.currentLobbyId}` 
         }, (payload) => {
             const newData = payload.new.game_state;
-            
-            // Если пришли новые данные, передаем их в саму игру!
             if (newData && typeof window.applyNetworkState === 'function') {
                 window.applyNetworkState(newData.gameState, newData.gameMap, newData.capturePoints);
             }
@@ -134,4 +143,4 @@ if (btnJoin) {
         btnJoin.innerText = "Войти";
         btnJoin.disabled = false;
     };
-          }
+}
