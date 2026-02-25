@@ -442,11 +442,10 @@ function endTurn() {
 }
 
 function updateUI() {
-function updateUI() {
     document.getElementById('p1-points').innerText = gameState.players[1].points;
     document.getElementById('p2-points').innerText = gameState.players[2].points;
     
-    // НОВОЕ: Выводим имена игроков на верхнюю панель!
+    // Выводим имена игроков на верхнюю панель!
     const p1NameElem = document.getElementById('p1-name');
     const p2NameElem = document.getElementById('p2-name');
     if (p1NameElem && gameState.players[1].name) p1NameElem.innerText = gameState.players[1].name;
