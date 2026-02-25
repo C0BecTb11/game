@@ -3,15 +3,14 @@
 const SUPABASE_URL = 'https://kgwqtxnewgdqyxtfteqi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_7DWrUXJqKs858mAZ46VWFQ_PAEcWc5m'; 
 
-let supabase;
+let supabaseServer;
 
-// Безопасная инициализация
+// Проверяем, загрузилась ли библиотека вообще
 if (window.supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log("Supabase успешно загружен!");
+    supabaseServer = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log("Supabase успешно подключен!");
 } else {
-    console.error("ОШИБКА: Библиотека Supabase не загрузилась. Возможно, блокирует провайдер или нет интернета.");
-    alert("Критическая ошибка: Supabase не загрузился. Нажми F12 и проверь консоль.");
+    alert("Внимание! Сервер базы данных недоступен. Проверьте интернет или отключите блокировщик рекламы.");
 }
 
 const getInitialGameState = () => ({
@@ -25,44 +24,35 @@ const getInitialGameState = () => ({
 });
 
 async function createOnlineLobby(mapType) {
-    if (!supabase) {
-        alert("Нет подключения к серверу Supabase!");
+    if (!supabaseServer) {
+        alert("Нет связи с сервером. Невозможно создать игру.");
         return;
     }
 
     try {
-        console.log("Отправляем запрос на создание комнаты...");
-        
-        const { data, error } = await supabase
+        const { data, error } = await supabaseServer
             .from('lobbies')
             .insert([{ map_type: mapType, status: 'waiting', game_state: getInitialGameState() }])
             .select();
 
-        // Если база выдала ошибку (например, из-за RLS)
         if (error) {
-            console.error("Ошибка базы данных:", error);
-            throw error;
-        }
-
-        // Если база ничего не вернула (скрытая блокировка RLS)
-        if (!data || data.length === 0) {
-            console.error("Данные не вернулись. Точно отключен RLS?");
-            alert("Ошибка: База заблокировала запись. Проверь настройки RLS в Supabase!");
+            alert(`Ошибка Базы: ${error.message}`);
             return;
         }
 
-        let lobbyId = data[0].id;
-        console.log("Успех! ID комнаты:", lobbyId);
-        alert(`Игра создана!\nТвой код комнаты: ${lobbyId}\nОтправь его второму игроку.`);
-        
-        return lobbyId;
+        if (data && data.length > 0) {
+            let lobbyId = data[0].id;
+            alert(`🔥 Игра успешно создана!\nТвой код комнаты: ${lobbyId}\nОтправь его второму игроку.`);
+        } else {
+            alert("Данные не записались. Проверьте отключен ли RLS в Supabase.");
+        }
+
     } catch (error) {
-        console.error("Ошибка при создании лобби:", error.message);
-        alert("Не удалось создать игру. Нажми F12 и посмотри красные ошибки в консоли.");
+        alert("Критическая ошибка: " + error.message);
     }
 }
 
-// Привязываем функцию напрямую к кнопке
+// Привязываем напрямую без DOMContentLoaded, чтобы работало сразу
 const btnCreate = document.getElementById('btn-create-online');
 if (btnCreate) {
     btnCreate.onclick = async () => {
@@ -74,6 +64,4 @@ if (btnCreate) {
         btnCreate.innerText = "Создать онлайн игру";
         btnCreate.disabled = false;
     };
-} else {
-    console.error("ОШИБКА: Кнопка 'Создать онлайн игру' не найдена в HTML!");
 }
