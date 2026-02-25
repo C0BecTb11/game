@@ -164,10 +164,14 @@ function handleMapClick(e) {
 }
 
 function isValidSpawn(x, y, playerID) {
-    if (getUnitAt(x, y)) return false;
-    let radius = GRID_SIZE === 10 ? 1 : 2; // Уменьшаем зону высадки для тестовой карты
-    if (playerID === 1) return x <= radius && y <= radius; 
-    if (playerID === 2) return x >= GRID_SIZE - (radius + 1) && y >= GRID_SIZE - (radius + 1);
+    if (getUnitAt(x, y)) return false; // Нельзя ставить друг на друга
+    
+    // Для тестовой карты зона 2x2 (от 0 до 1), для большой карты 5x5 (от 0 до 4)
+    let spawnZone = GRID_SIZE === 10 ? 1 : 4; 
+    
+    if (playerID === 1) return x <= spawnZone && y <= spawnZone; 
+    if (playerID === 2) return x >= GRID_SIZE - (spawnZone + 1) && y >= GRID_SIZE - (spawnZone + 1);
+    
     return false;
 }
 
