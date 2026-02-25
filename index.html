@@ -7,7 +7,14 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
+    <div id="main-menu">
+        <h1>Urban Tactics</h1>
+        <p>Командир, выберите зону высадки:</p>
+        <button id="btn-main-map" class="btn-primary">Основная карта (30x30)</button>
+        <button id="btn-test-map" style="background-color: #f57c00; border-color: #e65100;">Тестовый полигон (10x10)</button>
+    </div>
+
+    <div id="game-container" class="hidden">
         <header id="top-bar">
             <div class="player-stat player-1">Красные: <span id="p1-points">100</span> 💰</div>
             <div id="turn-indicator" class="turn-p1">Ход Игрока 1</div>
@@ -25,7 +32,6 @@
             </div>
 
             <aside id="shop">
-                
                 <div id="unit-info" class="hidden">
                     <div id="ui-name">Пехота</div>
                     <div class="ui-stats">
