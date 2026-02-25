@@ -1,32 +1,30 @@
 const UNIT_TYPES = {
     SOLDIER: { 
         id: 'soldier', name: "Пехота", imgSrc: "./images/team-r-soldier.png", 
-        cost: 50, maxHp: 10, attack: 2, attackRange: 1, moveRange: 2, canCapture: true 
+        cost: 50, maxHp: 10, attack: 2, attackRange: 1, moveRange: 2, visionRange: 4, canCapture: true 
     },
     RPK: { 
         id: 'rpk', name: "Пулемет", imgSrc: "./images/team-r-rpk.png", 
-        // Бафф: было 10 хп и 4 урона. Стало 15 хп и 5 урона. Гроза пехоты!
-        cost: 80, maxHp: 15, attack: 5, attackRange: 2, moveRange: 1, canCapture: true 
+        cost: 80, maxHp: 15, attack: 5, attackRange: 2, moveRange: 1, visionRange: 3, canCapture: true 
     },
     RPG: { 
         id: 'rpg', name: "Гранатометчик", imgSrc: "./images/team-r-rpg.png", 
-        // Нерф базы, бафф против брони: базовый урон всего 2. Но по технике добавит еще 13 (итого 15!)
-        cost: 100, maxHp: 8, attack: 2, attackRange: 2, moveRange: 2, canCapture: true, 
+        cost: 100, maxHp: 8, attack: 2, attackRange: 2, moveRange: 2, visionRange: 3, canCapture: true, 
         bonusArmorDamage: 13 
     },
     SUPPLY: { 
         id: 'supply', name: "Снабжение", imgSrc: "./images/team-r-supply.png", 
-        cost: 120, maxHp: 12, attack: 0, attackRange: 0, moveRange: 5, canCapture: false 
+        cost: 120, maxHp: 12, attack: 0, attackRange: 0, moveRange: 5, visionRange: 6, canCapture: false 
     },
     BTR: { 
         id: 'btr', name: "БТР", imgSrc: "./images/team-r-btr.png", 
-        cost: 250, maxHp: 25, attack: 5, attackRange: 3, moveRange: 4, canCapture: false, 
-        isArmor: true // <--- Уязвимость к РПГ
+        cost: 250, maxHp: 25, attack: 5, attackRange: 3, moveRange: 4, visionRange: 6, canCapture: false, 
+        isArmor: true 
     },
     TANK: { 
         id: 'tank', name: "Танк", imgSrc: "./images/team-r-tank.png", 
-        cost: 500, maxHp: 50, attack: 12, attackRange: 4, moveRange: 3, canCapture: false, 
-        isArmor: true // <--- Уязвимость к РПГ
+        cost: 500, maxHp: 50, attack: 12, attackRange: 4, moveRange: 3, visionRange: 5, canCapture: false, 
+        isArmor: true 
     }
 };
 
