@@ -1,8 +1,9 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const GRID_SIZE = 30; // Увеличили карту с 15 до 30 клеток!
-const TILE_SIZE = 40; // Размер одной клетки в пикселях (карта теперь 1200x1200px)
+// ТЕПЕРЬ ЭТО ПЕРЕМЕННЫЕ (let)
+let GRID_SIZE = 30; 
+let TILE_SIZE = 40; 
 
 const TILES = {
     ROAD: { color: '#444' },
@@ -14,10 +15,20 @@ const TILES = {
 let gameMap = [];
 let capturePoints = [];
 
-function generateMap() {
+function generateMap(mapType) {
     gameMap = [];
     capturePoints = [];
     
+    // НАСТРОЙКА РАЗМЕРОВ
+    if (mapType === 'test') {
+        GRID_SIZE = 10;
+        TILE_SIZE = 60; // На маленькой карте клетки будут крупнее
+    } else {
+        GRID_SIZE = 30;
+        TILE_SIZE = 40;
+    }
+
+    // Генерация ландшафта
     for (let y = 0; y < GRID_SIZE; y++) {
         let row = [];
         for (let x = 0; x < GRID_SIZE; x++) {
@@ -30,16 +41,22 @@ function generateMap() {
         gameMap.push(row);
     }
 
-    // Распределяем точки по большой карте
-    addCapturePoint(15, 15); // Центр
-    addCapturePoint(7, 22);
-    addCapturePoint(22, 7);
-    addCapturePoint(7, 7);
-    addCapturePoint(22, 22);
-    
-    // Очищаем зоны баз игроков
-    clearBaseArea(0, 0);
-    clearBaseArea(GRID_SIZE - 1, GRID_SIZE - 1);
+    // Расстановка контрольных точек и баз в зависимости от карты
+    if (mapType === 'test') {
+        addCapturePoint(4, 4);
+        addCapturePoint(2, 7);
+        addCapturePoint(7, 2);
+        clearBaseArea(0, 0, 1); // База 2x2
+        clearBaseArea(GRID_SIZE - 1, GRID_SIZE - 1, 1);
+    } else {
+        addCapturePoint(15, 15);
+        addCapturePoint(7, 22);
+        addCapturePoint(22, 7);
+        addCapturePoint(7, 7);
+        addCapturePoint(22, 22);
+        clearBaseArea(0, 0, 2); // База 3x3
+        clearBaseArea(GRID_SIZE - 1, GRID_SIZE - 1, 2);
+    }
 }
 
 function addCapturePoint(x, y) {
@@ -47,9 +64,9 @@ function addCapturePoint(x, y) {
     capturePoints.push({ x: x, y: y, owner: 0 });
 }
 
-function clearBaseArea(baseX, baseY) {
-    for(let dy = -2; dy <= 2; dy++) {
-        for(let dx = -2; dx <= 2; dx++) {
+function clearBaseArea(baseX, baseY, radius) {
+    for(let dy = -radius; dy <= radius; dy++) {
+        for(let dx = -radius; dx <= radius; dx++) {
             let nx = baseX + dx;
             let ny = baseY + dy;
             if(nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
@@ -82,14 +99,15 @@ function drawMap() {
             ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
     }
-    // Зоны высадки теперь больше (3x3 клетки)
     drawSpawnZone(0, 0, 'rgba(255, 85, 85, 0.3)');
     drawSpawnZone(GRID_SIZE - 1, GRID_SIZE - 1, 'rgba(85, 85, 255, 0.3)');
 }
 
 function drawSpawnZone(x, y, color) {
     ctx.fillStyle = color;
-    let startX = x === 0 ? 0 : x - 2;
-    let startY = y === 0 ? 0 : y - 2;
-    ctx.fillRect(startX * TILE_SIZE, startY * TILE_SIZE, TILE_SIZE * 3, TILE_SIZE * 3);
+    let radius = GRID_SIZE === 10 ? 1 : 2;
+    let size = GRID_SIZE === 10 ? 2 : 3;
+    let startX = x === 0 ? 0 : x - radius;
+    let startY = y === 0 ? 0 : y - radius;
+    ctx.fillRect(startX * TILE_SIZE, startY * TILE_SIZE, TILE_SIZE * size, TILE_SIZE * size);
 }
