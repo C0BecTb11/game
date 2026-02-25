@@ -94,11 +94,16 @@ body {
     border: 1px solid #444;
     display: flex;
     flex-direction: column;
-    gap: 15px;
 }
 
-#shop h3 { text-align: center; border-bottom: 1px solid #555; padding-bottom: 10px; }
-.shop-items { display: flex; flex-direction: column; gap: 10px; }
+#shop h3 { 
+    text-align: center; 
+    border-bottom: 1px solid #555; 
+    padding-bottom: 10px; 
+    margin-bottom: 15px;
+}
+
+.shop-items { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
 
 button {
     padding: 10px;
@@ -110,34 +115,21 @@ button {
     cursor: pointer;
 }
 button:active { background-color: #666; }
-.btn-primary { background-color: #2e7d32; border-color: #1b5e20; font-weight: bold; }
+.btn-primary { background-color: #2e7d32; border-color: #1b5e20; font-weight: bold; width: 100%; }
 .btn-primary:active { background-color: #4caf50; }
-
-@media (max-width: 768px) {
-    #main-area { flex-direction: column; align-items: center; }
-    #shop { width: 100%; max-width: 600px; }
-    .shop-items { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
-    .shop-items button { flex: 1 1 30%; min-width: 90px; }
-}
 
 /* --- ПАНЕЛЬ ИНФОРМАЦИИ О ЮНИТЕ --- */
 #unit-info {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background-color: rgba(20, 20, 20, 0.85); /* Темный полупрозрачный фон */
+    background-color: #1e1e1e;
     border: 1px solid #555;
-    border-radius: 8px;
-    padding: 8px 12px;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 15px; /* Отступ до слова "Штаб" */
     color: #fff;
-    font-size: 0.9rem;
-    pointer-events: none; /* Клики будут проходить сквозь неё на карту */
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.7);
-    transition: opacity 0.2s;
-    backdrop-filter: blur(3px); /* Легкое размытие фона под панелью */
+    gap: 8px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
 }
 
 #unit-info.hidden {
@@ -146,21 +138,31 @@ button:active { background-color: #666; }
 
 #ui-name {
     font-weight: bold;
-    border-bottom: 1px solid #555;
-    padding-bottom: 3px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
     text-align: center;
-    font-size: 1rem;
+    font-size: 1.1rem;
     text-shadow: 1px 1px 2px #000;
 }
 
 .ui-stats {
     display: flex;
-    gap: 12px;
-    justify-content: center;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.95rem;
 }
 
 .ui-stats div {
     display: flex;
     align-items: center;
     gap: 4px;
+}
+
+/* Мобильная адаптация перенесена в самый низ */
+@media (max-width: 768px) {
+    #main-area { flex-direction: column; align-items: center; }
+    #shop { width: 100%; max-width: 600px; }
+    .shop-items { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
+    .shop-items button { flex: 1 1 30%; min-width: 90px; }
 }
