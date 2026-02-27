@@ -43,7 +43,7 @@ function startGame(mapType, networkData = null) {
                 1: { points: 100, color: '#ff5555', name: myName },
                 2: { points: 100, color: '#5555ff', name: 'Ожидание...' }
             },
-            units: [], selectedUnit: null, unitToPlace: null
+            units: [], selectedUnit: null, unitToPlace: null, mines: [] // <-- Добавили хранилище мин
         };
         
         generateMap(mapType);
@@ -86,6 +86,7 @@ window.applyNetworkState = function(newState, newMap, newPoints) {
     }
 
     gameState = newState;
+        if (!gameState.mines) gameState.mines = []; // <-- Добавили эту строку
     gameMap = newMap;
     capturePoints = newPoints;
     
@@ -133,7 +134,14 @@ function initControls() {
         e.preventDefault();
         setZoom(e.deltaY > 0 ? (1/1.1) : 1.1);
     }, { passive: false });
-}
+    
+    document.getElementById('btn-place-mine').onclick = () => {
+        if (gameState.selectedUnit && gameState.selectedUnit.type.id === 'miner' && gameState.selectedUnit.mines > 0) {
+            gameState.state = gameState.state === 'PLACING_MINE' ? 'IDLE' : 'PLACING_MINE';
+            updateUI();
+            renderAll();
+        }
+    };
 
 function setZoom(factor) {
     camera.zoom *= factor;
@@ -353,7 +361,28 @@ function handleMapClick(e) {
     const x = Math.floor(worldX / TILE_SIZE);
     const y = Math.floor(worldY / TILE_SIZE);
 
-    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return; 
+    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return;
+
+        if (gameState.state === 'PLACING_MINE' && gameState.selectedUnit) {
+        let dist = Math.max(Math.abs(gameState.selectedUnit.x - x), Math.abs(gameState.selectedUnit.y - y));
+        if (dist <= 1 && dist > 0 && isPassable(x, y, gameState.selectedUnit) && !getUnitAt(x, y)) {
+            if (gameState.mines.find(m => m.x === x && m.y === y)) {
+                alert("Здесь уже есть мина!");
+                return;
+            }
+            gameState.mines.push({ x: x, y: y, owner: window.myPlayerId, damage: gameState.selectedUnit.type.mineDamage });
+            gameState.selectedUnit.mines--;
+            gameState.selectedUnit.hasMoved = true;
+            gameState.state = 'IDLE';
+            gameState.selectedUnit = null;
+        } else {
+            alert("Недопустимая клетка для установки мины!");
+            gameState.state = 'IDLE';
+        }
+        updateUI();
+        renderAll();
+        return;
+        }
     
     if (gameState.state === 'PLACING_UNIT' && gameState.unitToPlace) {
         if (isValidSpawn(x, y, gameState.turn)) {
@@ -366,6 +395,8 @@ function handleMapClick(e) {
             
             // Если покупаем медика - выдаем ему полный запас аптечек
             if (gameState.unitToPlace.id === 'medic') newUnit.medkits = gameState.unitToPlace.maxMedkits;
+                        // Если покупаем минёра - выдаем мины
+            if (gameState.unitToPlace.id === 'miner') newUnit.mines = gameState.unitToPlace.maxMines;
             
             gameState.units.push(newUnit);
             gameState.unitToPlace = null;
@@ -453,9 +484,69 @@ function isValidSpawn(x, y, playerID) {
 
 function getUnitAt(x, y) { return gameState.units.find(u => u.x === x && u.y === y); }
 
+// Функция строит маршрут по шагам, чтобы юнит не мог "перепрыгнуть" мину
+function findPath(unit, startX, startY, endX, endY) {
+    let queue = [[{x: startX, y: startY}]];
+    let visited = new Set();
+    visited.add(`${startX},${startY}`);
+
+    while(queue.length > 0) {
+        let path = queue.shift();
+        let curr = path[path.length - 1];
+
+        if (curr.x === endX && curr.y === endY) return path;
+
+        if (path.length - 1 < unit.type.moveRange) {
+            let neighbors = [
+                {x: curr.x + 1, y: curr.y}, {x: curr.x - 1, y: curr.y},
+                {x: curr.x, y: curr.y + 1}, {x: curr.x, y: curr.y - 1}
+            ];
+            for (let n of neighbors) {
+                if (!visited.has(`${n.x},${n.y}`) && isPassable(n.x, n.y, unit)) {
+                    visited.add(`${n.x},${n.y}`);
+                    queue.push([...path, n]);
+                }
+            }
+        }
+    }
+    return [{x: startX, y: startY}, {x: endX, y: endY}]; 
+}
+
 function moveUnit(unit, x, y) {
-    unit.x = x; unit.y = y; unit.hasMoved = true;
-    gameState.selectedUnit = null; gameState.state = 'IDLE';
+    let path = findPath(unit, unit.x, unit.y, x, y);
+    let finalX = unit.x;
+    let finalY = unit.y;
+    let mineHit = null;
+
+    // Идем по каждой клетке маршрута и проверяем наличие мин
+    for (let i = 1; i < path.length; i++) {
+        finalX = path[i].x;
+        finalY = path[i].y;
+        let mineIdx = gameState.mines.findIndex(m => m.x === finalX && m.y === finalY);
+        
+        if (mineIdx !== -1) {
+            mineHit = gameState.mines[mineIdx]; // Наступили на мину!
+            gameState.mines.splice(mineIdx, 1); // Мина взрывается и исчезает
+            break; // Дальше не идем
+        }
+    }
+
+    unit.x = finalX;
+    unit.y = finalY;
+    unit.hasMoved = true;
+    gameState.selectedUnit = null; 
+    gameState.state = 'IDLE';
+
+    if (mineHit) {
+        unit.hp -= mineHit.damage;
+        if(typeof showCombatNotification === 'function') {
+            showCombatNotification(mineHit.damage, unit.hp, unit.type.name, false);
+        }
+        if (unit.hp <= 0) {
+            gameState.units = gameState.units.filter(u => u !== unit);
+        }
+        alert("💥 БАБАХ! Юнит подорвался на мине!");
+    }
 }
 
 function attackUnit(attacker, target) {
