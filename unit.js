@@ -12,6 +12,29 @@ const UNIT_TYPES = {
         cost: 100, maxHp: 8, attack: 2, attackRange: 2, moveRange: 2, visionRange: 3, canCapture: true, 
         bonusArmorDamage: 13 
     },
+    // --- НОВЫЕ ЮНИТЫ ---
+    MEDIC: { 
+        id: 'medic', name: "Медик", imgSrc: "./images/team-r-med.png", 
+        cost: 60, maxHp: 10, attack: 1, attackRange: 1, moveRange: 3, visionRange: 4, canCapture: true 
+    },
+    MINER: { 
+        id: 'miner', name: "Минёр", imgSrc: "./images/team-r-mine.png", 
+        cost: 70, maxHp: 10, attack: 2, attackRange: 1, moveRange: 2, visionRange: 4, canCapture: true 
+    },
+    SNIPER: { 
+        id: 'sniper', name: "Снайпер", imgSrc: "./images/team-r-sniper.png", 
+        cost: 150, maxHp: 8, attack: 15, attackRange: 5, moveRange: 2, visionRange: 6, canCapture: false 
+    },
+    SPECNAZ: { 
+        id: 'specnaz', name: "Спецназ", imgSrc: "./images/team-r-spec.png", 
+        cost: 200, maxHp: 15, attack: 8, attackRange: 2, moveRange: 3, visionRange: 5, canCapture: true 
+    },
+    TRANSPORT: { 
+        id: 'transport', name: "Транспортник", imgSrc: "./images/team-r-peh.png", 
+        cost: 150, maxHp: 20, attack: 0, attackRange: 0, moveRange: 6, visionRange: 5, canCapture: false, 
+        isArmor: true 
+    },
+    // -------------------
     SUPPLY: { 
         id: 'supply', name: "Снабжение", imgSrc: "./images/team-r-supply.png", 
         cost: 120, maxHp: 12, attack: 0, attackRange: 0, moveRange: 5, visionRange: 6, canCapture: false 
