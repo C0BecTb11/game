@@ -358,10 +358,16 @@ function handleMapClick(e) {
     if (gameState.state === 'PLACING_UNIT' && gameState.unitToPlace) {
         if (isValidSpawn(x, y, gameState.turn)) {
             gameState.players[gameState.turn].points -= gameState.unitToPlace.cost;
-            gameState.units.push({
+            
+            let newUnit = {
                 type: gameState.unitToPlace, x: x, y: y,
                 owner: gameState.turn, hp: gameState.unitToPlace.maxHp, hasMoved: true
-            });
+            };
+            
+            // Если покупаем медика - выдаем ему полный запас аптечек
+            if (gameState.unitToPlace.id === 'medic') newUnit.medkits = gameState.unitToPlace.maxMedkits;
+            
+            gameState.units.push(newUnit);
             gameState.unitToPlace = null;
             gameState.state = 'IDLE';
             updateUI();
@@ -377,37 +383,52 @@ function handleMapClick(e) {
         if (clickedUnit && clickedUnit.owner !== gameState.turn && visibleMap[y][x]) {
             attackUnit(gameState.selectedUnit, clickedUnit);
         } else if (!clickedUnit || (clickedUnit && !visibleMap[y][x])) {
-            // Кликнули на пустую клетку - идем туда
             let reachable = getReachableCells(gameState.selectedUnit);
             let canMove = reachable.some(c => c.x === x && c.y === y);
             if (canMove) moveUnit(gameState.selectedUnit, x, y);
             else { gameState.selectedUnit = null; gameState.state = 'IDLE'; }
-            
         } else if (clickedUnit.owner === gameState.turn) {
-            // Кликнули на СВОЕГО юнита (например, на транспорт)
             
-            // Расчет дистанции (по прямой и диагонали)
             let dist = Math.max(Math.abs(gameState.selectedUnit.x - clickedUnit.x), Math.abs(gameState.selectedUnit.y - clickedUnit.y));
             
-            // Если выбран пехотинец, кликнули на транспорт, они вплотную и это не один и тот же юнит
-            if (gameState.selectedUnit.type.isInfantry && clickedUnit.type.transportCapacity && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
+            // === НОВАЯ МЕХАНИКА: ЛЕЧЕНИЕ ===
+            if (gameState.selectedUnit.type.id === 'medic' && clickedUnit.type.isInfantry && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
+                if (clickedUnit.hp < clickedUnit.type.maxHp) {
+                    if (gameState.selectedUnit.medkits > 0) {
+                        if (confirm(`Вылечить ${clickedUnit.type.name}?`)) {
+                            let heal = Math.min(gameState.selectedUnit.type.healAmount, clickedUnit.type.maxHp - clickedUnit.hp);
+                            clickedUnit.hp += heal;
+                            gameState.selectedUnit.medkits--; // Тратим аптечку
+                            gameState.selectedUnit.hasMoved = true; // Забираем ход у медика
+                            
+                            // Вызываем зеленое уведомление
+                            if(typeof showCombatNotification === 'function') {
+                                showCombatNotification(heal, clickedUnit.hp, clickedUnit.type.name, false, true);
+                            }
+                            
+                            gameState.selectedUnit = null;
+                            gameState.state = 'IDLE';
+                            updateUI();
+                            renderAll();
+                        }
+                    } else alert("У медика закончились аптечки!");
+                } else alert("Этот боец полностью здоров!");
+            }
+            // === МЕХАНИКА ТРАНСПОРТА ===
+            else if (gameState.selectedUnit.type.isInfantry && clickedUnit.type.transportCapacity && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
                 if (!clickedUnit.cargo) clickedUnit.cargo = [];
                 
                 if (clickedUnit.cargo.length < clickedUnit.type.transportCapacity) {
                     if (confirm(`Посадить ${gameState.selectedUnit.type.name} в ${clickedUnit.type.name}?`)) {
                         clickedUnit.cargo.push(gameState.selectedUnit);
-                        // Убираем пехотинца с глобальной карты (он теперь внутри машины)
                         gameState.units = gameState.units.filter(u => u !== gameState.selectedUnit); 
                         gameState.selectedUnit = null; 
                         gameState.state = 'IDLE';
                         updateUI();
                         renderAll();
                     }
-                } else {
-                    alert("В машине нет свободных мест!");
-                }
+                } else alert("В машине нет свободных мест!");
             } else {
-                // Если это не посадка, просто выбираем другого своего юнита
                 gameState.selectedUnit = clickedUnit.hasMoved ? null : clickedUnit;
             }
         }
