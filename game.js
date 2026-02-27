@@ -87,6 +87,13 @@ function initControls() {
     document.getElementById('buy-btr').onclick = () => prepareBuy('BTR');
     document.getElementById('buy-tank').onclick = () => prepareBuy('TANK');
     
+    // --- НОВЫЕ КНОПКИ ---
+    document.getElementById('buy-medic').onclick = () => prepareBuy('MEDIC');
+    document.getElementById('buy-miner').onclick = () => prepareBuy('MINER');
+    document.getElementById('buy-sniper').onclick = () => prepareBuy('SNIPER');
+    document.getElementById('buy-specnaz').onclick = () => prepareBuy('SPECNAZ');
+    document.getElementById('buy-transport').onclick = () => prepareBuy('TRANSPORT');
+    
     document.getElementById('end-turn').onclick = endTurn;
 
     document.getElementById('zoom-in').onclick = () => setZoom(1.2);
