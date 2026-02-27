@@ -5,7 +5,6 @@ function updateUI() {
     document.getElementById('p1-points').innerText = gameState.players[1].points;
     document.getElementById('p2-points').innerText = gameState.players[2].points;
     
-    // Выводим имена игроков
     const p1NameElem = document.getElementById('p1-name');
     const p2NameElem = document.getElementById('p2-name');
     if (p1NameElem && gameState.players[1].name) p1NameElem.innerText = gameState.players[1].name;
@@ -39,8 +38,19 @@ function updateUI() {
             
             document.getElementById('ui-move').innerText = u.type.moveRange;
             document.getElementById('ui-range').innerText = u.type.attackRange;
+
+            // --- ОБНОВЛЕНИЕ АПТЕЧЕК ---
+            const medkitContainer = document.getElementById('ui-medkits-container');
+            if (medkitContainer) {
+                if (u.type.id === 'medic') {
+                    medkitContainer.classList.remove('hidden');
+                    let currentMedkits = u.medkits !== undefined ? u.medkits : u.type.maxMedkits;
+                    document.getElementById('ui-medkits').innerText = `${currentMedkits}/${u.type.maxMedkits}`;
+                } else {
+                    medkitContainer.classList.add('hidden');
+                }
+            }
             
-            // --- РАСЧЕТ УГРОЗЫ ДЛЯ ПАНЕЛИ ---
             let threats = 0;
             if (u.owner === window.myPlayerId) {
                 let visibleMap = getVisibleMap();
@@ -55,7 +65,7 @@ function updateUI() {
             }
             
             const threatElem = document.getElementById('ui-threat');
-            if (threatElem) { // Защита от ошибки, если HTML еще не обновили
+            if (threatElem) { 
                 if (threats > 0) {
                     threatElem.classList.remove('hidden');
                     document.getElementById('ui-threat-count').innerText = threats;
@@ -63,8 +73,7 @@ function updateUI() {
                     threatElem.classList.add('hidden');
                 }
             }
-            // --------------------------------
-                        // --- ОТРИСОВКА ИНВЕНТАРЯ ТРАНСПОРТА ---
+            
             const cargoContainer = document.getElementById('ui-cargo-container');
             const cargoList = document.getElementById('ui-cargo-list');
             if (cargoContainer && cargoList) {
@@ -75,7 +84,6 @@ function updateUI() {
                     
                     for (let i = 0; i < u.type.transportCapacity; i++) {
                         if (cargo[i]) {
-                            // Если место занято бойцом
                             let btnHtml = (u.owner === window.myPlayerId) ? 
                                 `<button onclick="dropCargo(${i})" style="padding: 2px 5px; background: #ff4444; border: 1px solid #aa0000; border-radius: 3px; color: white; cursor: pointer;">Высадить</button>` : '';
                             
@@ -83,7 +91,6 @@ function updateUI() {
                                 <span>${cargo[i].type.name} ❤️${cargo[i].hp}</span> ${btnHtml}
                             </div>`;
                         } else {
-                            // Если место свободно
                             cargoList.innerHTML += `<div style="display: flex; justify-content: center; align-items: center; background: #1a1a1a; padding: 4px 8px; border-radius: 4px; border: 1px dashed #555; color: #777; font-size: 0.85rem;">
                                 [ Свободное место ]
                             </div>`;
@@ -101,24 +108,32 @@ function updateUI() {
     }
 }
 
-function showCombatNotification(dmg, remainingHp, targetName, inCover) {
+// ДОБАВЛЕН ФЛАГ isHeal ДЛЯ ЗЕЛЕНОГО ЦВЕТА УВЕДОМЛЕНИЙ
+function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = false) {
     const notif = document.getElementById('combat-notification');
     let dmgElem = document.getElementById('notif-dmg');
     
-    if (inCover) {
-        dmgElem.innerText = `${dmg} (Снижен укрытием 🛡️)`;
-        dmgElem.style.color = '#4caf50'; 
+    if (isHeal) {
+        dmgElem.innerText = `+${dmg} (Лечение 💊)`;
+        dmgElem.style.color = '#00ff00';
+        document.getElementById('notif-hp').innerText = `Стало ХП: ${remainingHp}`;
+        notif.style.borderColor = '#00ff00';
     } else {
-        dmgElem.innerText = dmg;
-        dmgElem.style.color = '#fff';
-    }
-    
-    if (remainingHp <= 0) {
-        document.getElementById('notif-hp').innerText = `Уничтожен (${targetName})`;
-        notif.style.borderColor = '#ff4444'; 
-    } else {
-        document.getElementById('notif-hp').innerText = `Осталось ХП: ${remainingHp}`;
-        notif.style.borderColor = '#ffaa00'; 
+        if (inCover) {
+            dmgElem.innerText = `${dmg} (Снижен укрытием 🛡️)`;
+            dmgElem.style.color = '#4caf50'; 
+        } else {
+            dmgElem.innerText = dmg;
+            dmgElem.style.color = '#fff';
+        }
+        
+        if (remainingHp <= 0) {
+            document.getElementById('notif-hp').innerText = `Уничтожен (${targetName})`;
+            notif.style.borderColor = '#ff4444'; 
+        } else {
+            document.getElementById('notif-hp').innerText = `Осталось ХП: ${remainingHp}`;
+            notif.style.borderColor = '#ffaa00'; 
+        }
     }
 
     notif.classList.remove('hidden');
@@ -161,13 +176,25 @@ function renderAll() {
                 let unitOnTile = getUnitAt(tx, ty);
                 
                 if (dist <= gameState.selectedUnit.type.attackRange && unitOnTile && unitOnTile.owner !== gameState.turn && visibleMap[ty][tx]) {
-                    // Обновил вызов функции, добавив сам юнит для правильного расчета стенок
                     if (checkLineOfSight(gameState.selectedUnit.x, gameState.selectedUnit.y, tx, ty, gameState.selectedUnit)) {
                         ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
                         ctx.fillRect(tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                     }
                 }
             }
+        }
+
+        // --- НОВАЯ ПОДСВЕТКА: ЦЕЛИ ДЛЯ ЛЕЧЕНИЯ МЕДИКОМ ---
+        if (gameState.selectedUnit.type.id === 'medic' && gameState.selectedUnit.medkits > 0) {
+            gameState.units.forEach(u => {
+                if (u.owner === gameState.turn && u.type.isInfantry && u.hp < u.type.maxHp && u !== gameState.selectedUnit) {
+                    let dist = Math.max(Math.abs(gameState.selectedUnit.x - u.x), Math.abs(gameState.selectedUnit.y - u.y));
+                    if (dist <= 1) {
+                        ctx.fillStyle = 'rgba(0, 255, 0, 0.4)'; // Зеленая зона вокруг раненых
+                        ctx.fillRect(u.x * TILE_SIZE, u.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    }
+                }
+            });
         }
     }
 
@@ -179,24 +206,17 @@ function renderAll() {
         ctx.strokeRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         ctx.lineWidth = 1;
 
-        // --- НОВАЯ МЕХАНИКА: ЛИНИИ УГРОЗЫ (ЛАЗЕРЫ) ---
         if (gameState.selectedUnit.owner === viewPlayer) {
             ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]); // Делаем линию пунктирной
+            ctx.setLineDash([5, 5]); 
             
             gameState.units.forEach(enemy => {
-                // Если это враг и мы его вообще видим из тумана войны
                 if (enemy.owner !== viewPlayer && visibleMap[enemy.y][enemy.x]) {
                     let dist = Math.abs(enemy.x - gameState.selectedUnit.x) + Math.abs(enemy.y - gameState.selectedUnit.y);
-                    
-                    // Если враг достает до нас и между нами нет глухих стен
                     if (dist <= enemy.type.attackRange && checkLineOfSight(enemy.x, enemy.y, gameState.selectedUnit.x, gameState.selectedUnit.y, enemy)) {
-                        
-                        // Рисуем красную подсветку под опасным врагом
                         ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
                         ctx.fillRect(enemy.x * TILE_SIZE, enemy.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
-                        // Рисуем луч прицеливания от врага к нашему юниту
                         ctx.beginPath();
                         ctx.moveTo(enemy.x * TILE_SIZE + TILE_SIZE / 2, enemy.y * TILE_SIZE + TILE_SIZE / 2);
                         ctx.lineTo(gameState.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2);
@@ -205,11 +225,9 @@ function renderAll() {
                     }
                 }
             });
-            
-            ctx.setLineDash([]); // Возвращаем обычную сплошную линию для остальной графики
+            ctx.setLineDash([]); 
             ctx.lineWidth = 1;
         }
-        // ----------------------------------------------
     }
 
     gameState.units.forEach(u => {
@@ -246,4 +264,4 @@ function renderAll() {
     });
 
     ctx.restore(); 
-            }
+                          }
