@@ -50,6 +50,33 @@ function updateUI() {
                     medkitContainer.classList.add('hidden');
                 }
             }
+
+                        // --- ОБНОВЛЕНИЕ МИН ---
+            const minesContainer = document.getElementById('ui-mines-container');
+            const btnPlaceMine = document.getElementById('btn-place-mine');
+            if (minesContainer && btnPlaceMine) {
+                if (u.type.id === 'miner') {
+                    minesContainer.classList.remove('hidden');
+                    let currentMines = u.mines !== undefined ? u.mines : u.type.maxMines;
+                    document.getElementById('ui-mines').innerText = `${currentMines}/${u.type.maxMines}`;
+                    
+                    if (currentMines > 0 && u.owner === window.myPlayerId && !u.hasMoved) {
+                        btnPlaceMine.classList.remove('hidden');
+                        if (gameState.state === 'PLACING_MINE') {
+                            btnPlaceMine.innerText = "ОТМЕНА";
+                            btnPlaceMine.style.background = "#aaa";
+                        } else {
+                            btnPlaceMine.innerText = "Установить мину";
+                            btnPlaceMine.style.background = "#ffaa00";
+                        }
+                    } else {
+                        btnPlaceMine.classList.add('hidden');
+                    }
+                } else {
+                    minesContainer.classList.add('hidden');
+                    btnPlaceMine.classList.add('hidden');
+                }
+            }
             
             let threats = 0;
             if (u.owner === window.myPlayerId) {
@@ -186,6 +213,37 @@ function renderAll() {
 
         // --- НОВАЯ ПОДСВЕТКА: ЦЕЛИ ДЛЯ ЛЕЧЕНИЯ МЕДИКОМ ---
         if (gameState.selectedUnit.type.id === 'medic' && gameState.selectedUnit.medkits > 0) {
+                // Отрисовка мин (видим только свои)
+    if (gameState.mines) {
+        gameState.mines.forEach(m => {
+            if (m.owner === viewPlayer) {
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(m.x * TILE_SIZE + TILE_SIZE / 2, m.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(m.x * TILE_SIZE + TILE_SIZE / 2, m.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+    }
+
+    // Подсветка зоны установки мины
+    if (gameState.state === 'PLACING_MINE' && gameState.selectedUnit) {
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                let nx = gameState.selectedUnit.x + dx;
+                let ny = gameState.selectedUnit.y + dy;
+                if (isPassable(nx, ny, gameState.selectedUnit) && !getUnitAt(nx, ny)) {
+                    ctx.fillStyle = 'rgba(255, 170, 0, 0.4)';
+                    ctx.fillRect(nx * TILE_SIZE, ny * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+        }
+    }
+            
             gameState.units.forEach(u => {
                 if (u.owner === gameState.turn && u.type.isInfantry && u.hp < u.type.maxHp && u !== gameState.selectedUnit) {
                     let dist = Math.max(Math.abs(gameState.selectedUnit.x - u.x), Math.abs(gameState.selectedUnit.y - u.y));
