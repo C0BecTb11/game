@@ -142,6 +142,7 @@ function initControls() {
             renderAll();
         }
     };
+}
 
 function setZoom(factor) {
     camera.zoom *= factor;
