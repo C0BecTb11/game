@@ -64,6 +64,35 @@ function updateUI() {
                 }
             }
             // --------------------------------
+                        // --- ОТРИСОВКА ИНВЕНТАРЯ ТРАНСПОРТА ---
+            const cargoContainer = document.getElementById('ui-cargo-container');
+            const cargoList = document.getElementById('ui-cargo-list');
+            if (cargoContainer && cargoList) {
+                if (u.type.transportCapacity) {
+                    cargoContainer.classList.remove('hidden');
+                    cargoList.innerHTML = '';
+                    let cargo = u.cargo || [];
+                    
+                    for (let i = 0; i < u.type.transportCapacity; i++) {
+                        if (cargo[i]) {
+                            // Если место занято бойцом
+                            let btnHtml = (u.owner === window.myPlayerId) ? 
+                                `<button onclick="dropCargo(${i})" style="padding: 2px 5px; background: #ff4444; border: 1px solid #aa0000; border-radius: 3px; color: white; cursor: pointer;">Высадить</button>` : '';
+                            
+                            cargoList.innerHTML += `<div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 4px 8px; border-radius: 4px; border: 1px solid #555; font-size: 0.85rem;">
+                                <span>${cargo[i].type.name} ❤️${cargo[i].hp}</span> ${btnHtml}
+                            </div>`;
+                        } else {
+                            // Если место свободно
+                            cargoList.innerHTML += `<div style="display: flex; justify-content: center; align-items: center; background: #1a1a1a; padding: 4px 8px; border-radius: 4px; border: 1px dashed #555; color: #777; font-size: 0.85rem;">
+                                [ Свободное место ]
+                            </div>`;
+                        }
+                    }
+                } else {
+                    cargoContainer.classList.add('hidden');
+                }
+            }
             
             panel.classList.remove('hidden');
         } else {
