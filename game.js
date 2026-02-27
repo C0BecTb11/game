@@ -76,6 +76,12 @@ window.applyNetworkState = function(newState, newMap, newPoints) {
     if (newState.units) {
         newState.units.forEach(u => {
             u.type = Object.values(UNIT_TYPES).find(t => t.id === u.type.id);
+            // Восстанавливаем типы пассажиров, если они есть
+            if (u.cargo) {
+                u.cargo.forEach(passenger => {
+                    passenger.type = Object.values(UNIT_TYPES).find(t => t.id === passenger.type.id);
+                });
+            }
         });
     }
 
@@ -371,12 +377,39 @@ function handleMapClick(e) {
         if (clickedUnit && clickedUnit.owner !== gameState.turn && visibleMap[y][x]) {
             attackUnit(gameState.selectedUnit, clickedUnit);
         } else if (!clickedUnit || (clickedUnit && !visibleMap[y][x])) {
+            // Кликнули на пустую клетку - идем туда
             let reachable = getReachableCells(gameState.selectedUnit);
             let canMove = reachable.some(c => c.x === x && c.y === y);
             if (canMove) moveUnit(gameState.selectedUnit, x, y);
             else { gameState.selectedUnit = null; gameState.state = 'IDLE'; }
+            
         } else if (clickedUnit.owner === gameState.turn) {
-            gameState.selectedUnit = clickedUnit.hasMoved ? null : clickedUnit;
+            // Кликнули на СВОЕГО юнита (например, на транспорт)
+            
+            // Расчет дистанции (по прямой и диагонали)
+            let dist = Math.max(Math.abs(gameState.selectedUnit.x - clickedUnit.x), Math.abs(gameState.selectedUnit.y - clickedUnit.y));
+            
+            // Если выбран пехотинец, кликнули на транспорт, они вплотную и это не один и тот же юнит
+            if (gameState.selectedUnit.type.isInfantry && clickedUnit.type.transportCapacity && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
+                if (!clickedUnit.cargo) clickedUnit.cargo = [];
+                
+                if (clickedUnit.cargo.length < clickedUnit.type.transportCapacity) {
+                    if (confirm(`Посадить ${gameState.selectedUnit.type.name} в ${clickedUnit.type.name}?`)) {
+                        clickedUnit.cargo.push(gameState.selectedUnit);
+                        // Убираем пехотинца с глобальной карты (он теперь внутри машины)
+                        gameState.units = gameState.units.filter(u => u !== gameState.selectedUnit); 
+                        gameState.selectedUnit = null; 
+                        gameState.state = 'IDLE';
+                        updateUI();
+                        renderAll();
+                    }
+                } else {
+                    alert("В машине нет свободных мест!");
+                }
+            } else {
+                // Если это не посадка, просто выбираем другого своего юнита
+                gameState.selectedUnit = clickedUnit.hasMoved ? null : clickedUnit;
+            }
         }
     } else {
         if (clickedUnit && clickedUnit.owner === gameState.turn && !clickedUnit.hasMoved) {
@@ -458,4 +491,44 @@ window.toggleCategory = function(categoryId) {
         // Переключаем класс hidden (если он есть - убираем, если нет - добавляем)
         categoryDiv.classList.toggle('hidden');
     }
+};
+
+// === ЛОГИКА ВЫСАДКИ ДЕСАНТА ===
+window.dropCargo = function(index) {
+    let transport = gameState.selectedUnit;
+    if (!transport || !transport.cargo || !transport.cargo[index]) return;
+
+    let unitToDrop = transport.cargo[index];
+    let freeTiles = [];
+    
+    // Ищем свободные клетки вокруг транспорта (по диагонали и прямым)
+    for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            let nx = transport.x + dx;
+            let ny = transport.y + dy;
+            
+            // Если клетка проходима и на ней НИКТО не стоит
+            if (isPassable(nx, ny, unitToDrop) && !getUnitAt(nx, ny)) {
+                freeTiles.push({x: nx, y: ny});
+            }
+        }
+    }
+
+    if (freeTiles.length === 0) {
+        alert("Вокруг нет места для высадки!");
+        return;
+    }
+
+    // Высаживаем на первую попавшуюся свободную клетку
+    let dropTile = freeTiles[0]; 
+    unitToDrop.x = dropTile.x;
+    unitToDrop.y = dropTile.y;
+    unitToDrop.hasMoved = true; // Высаженный боец сразу теряет ход, это баланс
+    
+    transport.cargo.splice(index, 1);
+    gameState.units.push(unitToDrop);
+    
+    updateUI();
+    renderAll();
 };
