@@ -82,7 +82,7 @@
                 </div>
             </div>
 
-            <aside id="shop">
+                        <aside id="shop">
                 <div id="unit-info" class="hidden">
                     <div id="ui-name">Пехота</div>
                     <div class="ui-stats">
@@ -91,41 +91,37 @@
                         <div title="Дальность хода">🏃 <span id="ui-move">2</span></div>
                         <div title="Дальность стрельбы">🎯 <span id="ui-range">1</span></div>
                     </div>
-                                        <div id="ui-threat" class="hidden" style="color: #ff5555; font-size: 0.85rem; text-align: center; margin-top: 8px; font-weight: bold; border-top: 1px solid #444; padding-top: 5px;">
+                    <div id="ui-threat" class="hidden" style="color: #ff5555; font-size: 0.85rem; text-align: center; margin-top: 8px; font-weight: bold; border-top: 1px solid #444; padding-top: 5px;">
                         ⚠️ На мушке у: <span id="ui-threat-count">0</span>
                     </div>
                 </div>
 
-            <h3>Штаб (Заказ)</h3>
+                <button id="end-turn" class="btn-primary" style="margin-bottom: 15px; padding: 15px; font-size: 1.1rem;">⏳ Завершить ход</button>
 
-            <div class="shop-category">Пехота</div>
-            <div class="shop-items">
-                <button id="buy-soldier">Пехота (50)</button>
-                <button id="buy-medic">Медик (60)</button>
-                <button id="buy-miner">Минёр (70)</button>
-                <button id="buy-rpk">Пулемет (80)</button>
-                <button id="buy-rpg">Гранатомет (100)</button>
-                <button id="buy-sniper">Снайпер (150)</button>
-                <button id="buy-specnaz">Спецназ (200)</button>
-            </div>
+                <h3 style="margin-bottom: 10px;">Штаб (Заказ)</h3>
 
-            <div class="shop-category">Наземная техника</div>
-            <div class="shop-items">
-                <button id="buy-transport">Транспортник (150)</button>
-                <button id="buy-btr">БТР (250)</button>
-                <button id="buy-tank">Танк (500)</button>
-            </div>
+                <button class="shop-category-btn" onclick="toggleCategory('cat-infantry')">Пехота 🔽</button>
+                <div id="cat-infantry" class="shop-items">
+                    <button id="buy-soldier">Пехота (50)</button>
+                    <button id="buy-medic">Медик (60)</button>
+                    <button id="buy-miner">Минёр (70)</button>
+                    <button id="buy-rpk">Пулемет (80)</button>
+                    <button id="buy-rpg">Гранатомет (100)</button>
+                    <button id="buy-sniper">Снайпер (150)</button>
+                    <button id="buy-specnaz">Спецназ (200)</button>
+                </div>
 
-            <div class="shop-category">Логистика</div>
-            <div class="shop-items" style="margin-bottom: 20px;">
-                <button id="buy-supply">Снабжение (120)</button>
-            </div>
+                <button class="shop-category-btn" onclick="toggleCategory('cat-vehicles')">Наземная техника 🔽</button>
+                <div id="cat-vehicles" class="shop-items hidden"> <button id="buy-transport">Транспорт (150)</button>
+                    <button id="buy-btr">БТР (250)</button>
+                    <button id="buy-tank">Танк (500)</button>
+                </div>
 
-            <button id="end-turn" class="btn-primary">Завершить ход</button>
-        </aside>
-        </div>
-    </div>
-
+                <button class="shop-category-btn" onclick="toggleCategory('cat-logistics')">Логистика 🔽</button>
+                <div id="cat-logistics" class="shop-items hidden" style="margin-bottom: 20px;"> <button id="buy-supply">Снабжение (120)</button>
+                </div>
+                        </aside>
+            
     <div id="encyclopedia-modal" class="hidden">
         <div class="modal-content">
             <button id="btn-close-help" class="close-btn">❌</button>
