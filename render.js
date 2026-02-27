@@ -181,6 +181,7 @@ function renderAll() {
     let visibleMap = getVisibleMap();
     let viewPlayer = window.myPlayerId;
 
+    // Отрисовка тумана войны
     for (let y = 0; y < GRID_SIZE; y++) {
         for (let x = 0; x < GRID_SIZE; x++) {
             if (!visibleMap[y][x]) {
@@ -189,8 +190,40 @@ function renderAll() {
             }
         }
     }
+
+    // --- ОТРИСОВКА МИН (Теперь они независимы и видны всегда) ---
+    if (gameState.mines) {
+        gameState.mines.forEach(m => {
+            if (m.owner === viewPlayer) {
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(m.x * TILE_SIZE + TILE_SIZE / 2, m.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(m.x * TILE_SIZE + TILE_SIZE / 2, m.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+    }
+
+    // --- ПОДСВЕТКА ЗОНЫ УСТАНОВКИ МИНЫ ---
+    if (gameState.state === 'PLACING_MINE' && gameState.selectedUnit) {
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                let nx = gameState.selectedUnit.x + dx;
+                let ny = gameState.selectedUnit.y + dy;
+                if (isPassable(nx, ny, gameState.selectedUnit) && !getUnitAt(nx, ny)) {
+                    ctx.fillStyle = 'rgba(255, 170, 0, 0.4)'; // Оранжевая зона для мины
+                    ctx.fillRect(nx * TILE_SIZE, ny * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+        }
+    }
     
-    if (gameState.selectedUnit && !gameState.selectedUnit.hasMoved) {
+    // Подсветка ходов, атак и лечения (если мы не в режиме минирования)
+    if (gameState.selectedUnit && !gameState.selectedUnit.hasMoved && gameState.state !== 'PLACING_MINE') {
         let reachable = getReachableCells(gameState.selectedUnit);
         ctx.fillStyle = 'rgba(0, 200, 255, 0.3)';
         reachable.forEach(cell => {
@@ -211,39 +244,8 @@ function renderAll() {
             }
         }
 
-        // --- НОВАЯ ПОДСВЕТКА: ЦЕЛИ ДЛЯ ЛЕЧЕНИЯ МЕДИКОМ ---
+        // --- ПОДСВЕТКА ЦЕЛЕЙ ДЛЯ ЛЕЧЕНИЯ ---
         if (gameState.selectedUnit.type.id === 'medic' && gameState.selectedUnit.medkits > 0) {
-                // Отрисовка мин (видим только свои)
-    if (gameState.mines) {
-        gameState.mines.forEach(m => {
-            if (m.owner === viewPlayer) {
-                ctx.fillStyle = '#ffaa00';
-                ctx.beginPath();
-                ctx.arc(m.x * TILE_SIZE + TILE_SIZE / 2, m.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 4, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(m.x * TILE_SIZE + TILE_SIZE / 2, m.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 8, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        });
-    }
-
-    // Подсветка зоны установки мины
-    if (gameState.state === 'PLACING_MINE' && gameState.selectedUnit) {
-        for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-                if (dx === 0 && dy === 0) continue;
-                let nx = gameState.selectedUnit.x + dx;
-                let ny = gameState.selectedUnit.y + dy;
-                if (isPassable(nx, ny, gameState.selectedUnit) && !getUnitAt(nx, ny)) {
-                    ctx.fillStyle = 'rgba(255, 170, 0, 0.4)';
-                    ctx.fillRect(nx * TILE_SIZE, ny * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                }
-            }
-        }
-    }
-            
             gameState.units.forEach(u => {
                 if (u.owner === gameState.turn && u.type.isInfantry && u.hp < u.type.maxHp && u !== gameState.selectedUnit) {
                     let dist = Math.max(Math.abs(gameState.selectedUnit.x - u.x), Math.abs(gameState.selectedUnit.y - u.y));
@@ -256,6 +258,7 @@ function renderAll() {
         }
     }
 
+    // Отрисовка выделения и лазерных прицелов
     if (gameState.selectedUnit) {
         ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
         ctx.fillRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -288,6 +291,7 @@ function renderAll() {
         }
     }
 
+    // Отрисовка всех юнитов
     gameState.units.forEach(u => {
         if (u.owner !== viewPlayer && !visibleMap[u.y][u.x]) return;
 
@@ -322,4 +326,4 @@ function renderAll() {
     });
 
     ctx.restore(); 
-                          }
+}
