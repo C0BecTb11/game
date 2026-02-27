@@ -9,22 +9,25 @@ window.onload = () => {
     });
 };
 
+// === ОБНОВЛЕННАЯ ФУНКЦИЯ ЗАПУСКА ===
 function startGame(mapType, networkData = null) {
     document.getElementById('main-menu').classList.add('hidden');
     document.getElementById('game-container').classList.remove('hidden');
-
-    camera = { x: 0, y: 0, zoom: 1 };
-    if (window.isOnlineGame && window.myPlayerId === 2) {
-        camera.x = (GRID_SIZE * TILE_SIZE) - 600; 
-        camera.y = (GRID_SIZE * TILE_SIZE) - 600;
-    }
 
     // Получаем никнейм из системы авторизации
     let myName = window.currentUser ? window.currentUser.user_metadata.display_name : `Командир ${window.myPlayerId}`;
 
     if (networkData) {
+        // СНАЧАЛА применяем данные из сети (это автоматически обновит GRID_SIZE под размер карты)
         window.applyNetworkState(networkData.gameState, networkData.gameMap, networkData.capturePoints);
         
+        // ТЕПЕРЬ выставляем камеру, зная правильные размеры карты
+        camera = { x: 0, y: 0, zoom: 1 };
+        if (window.isOnlineGame && window.myPlayerId === 2) {
+            camera.x = (GRID_SIZE * TILE_SIZE) - 600; 
+            camera.y = (GRID_SIZE * TILE_SIZE) - 600;
+        }
+
         // Если зашел Игрок 2, обновляем его имя в базе
         if (window.myPlayerId === 2 && gameState.players[2].name === 'Ожидание...') {
             gameState.players[2].name = myName;
@@ -42,7 +45,14 @@ function startGame(mapType, networkData = null) {
             },
             units: [], selectedUnit: null, unitToPlace: null
         };
+        
         generateMap(mapType);
+        
+        camera = { x: 0, y: 0, zoom: 1 };
+        if (window.isOnlineGame && window.myPlayerId === 2) {
+            camera.x = (GRID_SIZE * TILE_SIZE) - 600; 
+            camera.y = (GRID_SIZE * TILE_SIZE) - 600;
+        }
         
         if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
         updateUI();
@@ -50,9 +60,13 @@ function startGame(mapType, networkData = null) {
     }
 }
 
-// === СЕТЕВАЯ СИНХРОНИЗАЦИЯ ===
+// === ОБНОВЛЕННАЯ ФУНКЦИЯ СИНХРОНИЗАЦИИ ===
 window.applyNetworkState = function(newState, newMap, newPoints) {
-    // Восстановление ссылок на объекты после JSON
+    // 1. ИСПРАВЛЕНИЕ: Автоматически подстраиваем размер игры под загруженную карту
+    GRID_SIZE = newMap.length; 
+    TILE_SIZE = GRID_SIZE <= 15 ? 45 : 40; 
+
+    // 2. Восстановление ссылок на объекты после JSON
     newMap.forEach(row => {
         row.forEach(cell => {
             cell.type = Object.values(TILES).find(t => t.id === cell.type.id);
@@ -69,6 +83,7 @@ window.applyNetworkState = function(newState, newMap, newPoints) {
     gameMap = newMap;
     capturePoints = newPoints;
     
+    // Сбрасываем выделение, если сейчас не наш ход
     if (gameState.turn !== window.myPlayerId) {
         gameState.selectedUnit = null;
         gameState.state = 'IDLE';
