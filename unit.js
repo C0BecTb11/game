@@ -22,7 +22,7 @@ const UNIT_TYPES = {
     MINER: { 
         id: 'miner', name: "Минёр", imgSrc: "./images/team-r-mine.png", 
         cost: 70, maxHp: 10, attack: 2, attackRange: 1, moveRange: 2, visionRange: 4, canCapture: true,
-        isInfantry: true 
+        isInfantry: true, maxMines: 3, mineDamage: 15 
     },
     SNIPER: { 
         id: 'sniper', name: "Снайпер", imgSrc: "./images/team-r-sniper.png", 
