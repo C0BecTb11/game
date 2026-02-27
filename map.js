@@ -20,15 +20,47 @@ function generateMap(mapType) {
     gameMap = [];
     capturePoints = [];
     
+    // 🔥 РУБИЛЬНИК ДЛЯ ТЕСТОВ: 
+    // Пока эта строка раскомментирована, игра всегда создает маленькую арену 15x15
+    mapType = 'test'; 
+
     if (mapType === 'test') {
-        GRID_SIZE = 10;
-        TILE_SIZE = 60;
-        generateTestMap();
+        GRID_SIZE = 15; // Компактный размер для быстрых боев
+        TILE_SIZE = 45; // Чуть увеличим масштаб тайла
+        generateTestArena(); 
     } else {
-        GRID_SIZE = 60; // Устанавливаем размер 60x60
+        GRID_SIZE = 60; // Наша гигантская карта
         TILE_SIZE = 40;
         generateOrganicMainMap(); 
     }
+}
+
+// === НОВАЯ УДОБНАЯ ТЕСТОВАЯ АРЕНА (15x15) ===
+function generateTestArena() {
+    // 1. Заливаем всё асфальтом для скорости передвижения
+    for (let y = 0; y < GRID_SIZE; y++) {
+        let row = [];
+        for (let x = 0; x < GRID_SIZE; x++) {
+            row.push({ type: TILES.ROAD }); 
+        }
+        gameMap.push(row);
+    }
+    
+    // 2. Ставим "бетонную коробку" по центру для тестов линии видимости
+    for (let y = 6; y <= 8; y++) {
+        for (let x = 6; x <= 8; x++) {
+            gameMap[y][x].type = TILES.BUILDING;
+        }
+    }
+    gameMap[7][7].type = TILES.ROAD; // Делаем "внутренний дворик" в здании
+    
+    // 3. Парочка точек захвата
+    addCapturePoint(7, 3);
+    addCapturePoint(7, 11);
+    
+    // 4. Базы игроков
+    clearBaseArea(2, 2, 2); 
+    clearBaseArea(GRID_SIZE - 3, GRID_SIZE - 3, 2);
 }
 
 // === ГЕНЕРАТОР ГИГАНТСКОЙ СИММЕТРИЧНОЙ КАРТЫ ===
@@ -151,7 +183,7 @@ function generateOrganicMainMap() {
     clearBaseArea(GRID_SIZE - 3, GRID_SIZE - 3, 4);
 }
 
-// Тестовая площадка остается 10x10
+// Старая тестовая площадка 10x10 (оставил на всякий случай)
 function generateTestMap() {
     for (let y = 0; y < GRID_SIZE; y++) {
         let row = [];
@@ -224,8 +256,8 @@ function drawMap() {
 
 function drawSpawnZone(x, y, color) {
     ctx.fillStyle = color;
-    let zoneSize = GRID_SIZE === 10 ? 2 : 5; // На большой карте зона высадки 5x5
+    let zoneSize = GRID_SIZE <= 15 ? 2 : 5; // Сделал так, чтобы зона высадки на мелкой карте была 2x2
     let startX = x === 0 ? 0 : x - zoneSize + 1;
     let startY = y === 0 ? 0 : y - zoneSize + 1;
     ctx.fillRect(startX * TILE_SIZE, startY * TILE_SIZE, TILE_SIZE * zoneSize, TILE_SIZE * zoneSize);
-}
+        }
