@@ -40,6 +40,31 @@ function updateUI() {
             document.getElementById('ui-move').innerText = u.type.moveRange;
             document.getElementById('ui-range').innerText = u.type.attackRange;
             
+            // --- РАСЧЕТ УГРОЗЫ ДЛЯ ПАНЕЛИ ---
+            let threats = 0;
+            if (u.owner === window.myPlayerId) {
+                let visibleMap = getVisibleMap();
+                gameState.units.forEach(enemy => {
+                    if (enemy.owner !== window.myPlayerId && visibleMap[enemy.y][enemy.x]) {
+                        let dist = Math.abs(enemy.x - u.x) + Math.abs(enemy.y - u.y);
+                        if (dist <= enemy.type.attackRange && checkLineOfSight(enemy.x, enemy.y, u.x, u.y, enemy)) {
+                            threats++;
+                        }
+                    }
+                });
+            }
+            
+            const threatElem = document.getElementById('ui-threat');
+            if (threatElem) { // Защита от ошибки, если HTML еще не обновили
+                if (threats > 0) {
+                    threatElem.classList.remove('hidden');
+                    document.getElementById('ui-threat-count').innerText = threats;
+                } else {
+                    threatElem.classList.add('hidden');
+                }
+            }
+            // --------------------------------
+            
             panel.classList.remove('hidden');
         } else {
             panel.classList.add('hidden');
@@ -107,7 +132,8 @@ function renderAll() {
                 let unitOnTile = getUnitAt(tx, ty);
                 
                 if (dist <= gameState.selectedUnit.type.attackRange && unitOnTile && unitOnTile.owner !== gameState.turn && visibleMap[ty][tx]) {
-                    if (checkLineOfSight(gameState.selectedUnit.x, gameState.selectedUnit.y, tx, ty)) {
+                    // Обновил вызов функции, добавив сам юнит для правильного расчета стенок
+                    if (checkLineOfSight(gameState.selectedUnit.x, gameState.selectedUnit.y, tx, ty, gameState.selectedUnit)) {
                         ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
                         ctx.fillRect(tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                     }
@@ -123,6 +149,38 @@ function renderAll() {
         ctx.lineWidth = 3;
         ctx.strokeRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         ctx.lineWidth = 1;
+
+        // --- НОВАЯ МЕХАНИКА: ЛИНИИ УГРОЗЫ (ЛАЗЕРЫ) ---
+        if (gameState.selectedUnit.owner === viewPlayer) {
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]); // Делаем линию пунктирной
+            
+            gameState.units.forEach(enemy => {
+                // Если это враг и мы его вообще видим из тумана войны
+                if (enemy.owner !== viewPlayer && visibleMap[enemy.y][enemy.x]) {
+                    let dist = Math.abs(enemy.x - gameState.selectedUnit.x) + Math.abs(enemy.y - gameState.selectedUnit.y);
+                    
+                    // Если враг достает до нас и между нами нет глухих стен
+                    if (dist <= enemy.type.attackRange && checkLineOfSight(enemy.x, enemy.y, gameState.selectedUnit.x, gameState.selectedUnit.y, enemy)) {
+                        
+                        // Рисуем красную подсветку под опасным врагом
+                        ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                        ctx.fillRect(enemy.x * TILE_SIZE, enemy.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+                        // Рисуем луч прицеливания от врага к нашему юниту
+                        ctx.beginPath();
+                        ctx.moveTo(enemy.x * TILE_SIZE + TILE_SIZE / 2, enemy.y * TILE_SIZE + TILE_SIZE / 2);
+                        ctx.lineTo(gameState.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2);
+                        ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)';
+                        ctx.stroke();
+                    }
+                }
+            });
+            
+            ctx.setLineDash([]); // Возвращаем обычную сплошную линию для остальной графики
+            ctx.lineWidth = 1;
+        }
+        // ----------------------------------------------
     }
 
     gameState.units.forEach(u => {
@@ -159,4 +217,4 @@ function renderAll() {
     });
 
     ctx.restore(); 
-}
+            }
