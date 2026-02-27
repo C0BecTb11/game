@@ -450,4 +450,12 @@ function endTurn() {
     renderAll();
     if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
       }
-          
+
+// === УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ МАГАЗИНА ===
+window.toggleCategory = function(categoryId) {
+    const categoryDiv = document.getElementById(categoryId);
+    if (categoryDiv) {
+        // Переключаем класс hidden (если он есть - убираем, если нет - добавляем)
+        categoryDiv.classList.toggle('hidden');
+    }
+};
