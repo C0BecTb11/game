@@ -17,7 +17,7 @@ const UNIT_TYPES = {
     MEDIC: { 
         id: 'medic', name: "Медик", imgSrc: "./images/team-r-med.png", 
         cost: 60, maxHp: 10, attack: 1, attackRange: 1, moveRange: 3, visionRange: 4, canCapture: true,
-        isInfantry: true 
+        isInfantry: true, maxMedkits: 5, healAmount: 5 
     },
     MINER: { 
         id: 'miner', name: "Минёр", imgSrc: "./images/team-r-mine.png", 
