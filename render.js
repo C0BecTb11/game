@@ -183,19 +183,7 @@ function updateUI() {
                             btnCreateStash.classList.add('hidden');
                         }
                     }
-                } else {
-                    supplyContainer.classList.add('hidden');
-                }
-            }
-
-            panel.classList.remove('hidden');
-        } else {
-            panel.classList.add('hidden');
-        }
-    }
-}
-
-          // Управление автопилотом
+                                        // Управление автопилотом
                     const btnSetRoute = document.getElementById('btn-set-route');
                     const btnCancelRoute = document.getElementById('btn-cancel-route');
                     if (btnSetRoute && btnCancelRoute) {
@@ -214,6 +202,17 @@ function updateUI() {
                             }
                         }
                     }
+                } else {
+                    supplyContainer.classList.add('hidden');
+                }
+            }
+
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+}
 
 function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = false) {
     const notif = document.getElementById('combat-notification');
