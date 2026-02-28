@@ -752,3 +752,16 @@ window.transferRes = function(resType, direction) {
     updateUI();
     renderAll();
 };
+
+window.toggleRouteMode = function() {
+    if (gameState.state === 'SETTING_ROUTE') gameState.state = 'IDLE';
+    else gameState.state = 'SETTING_ROUTE';
+    updateUI();
+    renderAll();
+};
+
+window.cancelRoute = function() {
+    if (gameState.selectedUnit) gameState.selectedUnit.autopilotTarget = null;
+    updateUI();
+    renderAll();
+};
