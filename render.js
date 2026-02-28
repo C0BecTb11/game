@@ -51,7 +51,7 @@ function updateUI() {
                 }
             }
 
-                        // --- ОБНОВЛЕНИЕ МИН ---
+            // --- ОБНОВЛЕНИЕ МИН ---
             const minesContainer = document.getElementById('ui-mines-container');
             const btnPlaceMine = document.getElementById('btn-place-mine');
             if (minesContainer && btnPlaceMine) {
@@ -127,13 +127,7 @@ function updateUI() {
                     cargoContainer.classList.add('hidden');
                 }
             }
-            
-            panel.classList.remove('hidden');
-        } else {
-            panel.classList.add('hidden');
-        }
-    }
-}
+
             // --- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА СНАБЖЕНИЯ ---
             const supplyContainer = document.getElementById('ui-supply-container');
             if (supplyContainer) {
@@ -159,6 +153,13 @@ function updateUI() {
                     supplyContainer.classList.add('hidden');
                 }
             }
+            
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+}
 
 // ДОБАВЛЕН ФЛАГ isHeal ДЛЯ ЗЕЛЕНОГО ЦВЕТА УВЕДОМЛЕНИЙ
 function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = false) {
@@ -351,4 +352,4 @@ function renderAll() {
     });
 
     ctx.restore(); 
-}
+                                         }
