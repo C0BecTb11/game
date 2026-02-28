@@ -819,3 +819,80 @@ window.cancelRoute = function() {
     updateUI();
     renderAll();
 };
+
+// === ЛОГИКА ПОПОЛНЕНИЯ ЗАПАСОВ (ФАЗА 2.5) ===
+window.resupplyUnit = function() {
+    let u = gameState.selectedUnit;
+    if (!u || u.hasMoved) return;
+
+    let resType = null;
+    let current = 0;
+    let max = 0;
+
+    // Определяем, что нужно выбранному юниту
+    if (u.type.id === 'medic') {
+        resType = 'medkits';
+        current = u.medkits !== undefined ? u.medkits : u.type.maxMedkits;
+        max = u.type.maxMedkits;
+    } else if (u.type.id === 'miner') {
+        resType = 'mines';
+        current = u.mines !== undefined ? u.mines : u.type.maxMines;
+        max = u.type.maxMines;
+    } else {
+        return;
+    }
+
+    let needed = max - current;
+    if (needed <= 0) return;
+
+    let source = null;
+    
+    // Сначала ищем Склад в радиусе 1 клетки
+    if (gameState.stashes) {
+        let adjStash = gameState.stashes.find(s => Math.max(Math.abs(s.x - u.x), Math.abs(s.y - u.y)) <= 1 && s.res[resType] > 0);
+        if (adjStash) source = { type: 'stash', obj: adjStash };
+    }
+
+    // Если склада нет, ищем свой Грузовик снабжения
+    if (!source) {
+        let adjTruck = gameState.units.find(truck => 
+            truck.owner === window.myPlayerId && 
+            truck.type.id === 'supply' && 
+            Math.max(Math.abs(truck.x - u.x), Math.abs(truck.y - u.y)) <= 1 &&
+            truck.cargoRes && truck.cargoRes[resType] > 0
+        );
+        if (adjTruck) source = { type: 'truck', obj: adjTruck };
+    }
+
+    if (!source) return;
+
+    // Считаем, сколько можем взять
+    let available = source.type === 'stash' ? source.obj.res[resType] : source.obj.cargoRes[resType];
+    let taken = Math.min(needed, available);
+
+    // Добавляем юниту
+    if (resType === 'medkits') u.medkits = current + taken;
+    if (resType === 'mines') u.mines = current + taken;
+
+    // Забираем со склада/грузовика
+    if (source.type === 'stash') {
+        source.obj.res[resType] -= taken;
+        // Если склад опустел - удаляем его с карты
+        let stashTotal = source.obj.res.medkits + source.obj.res.mines + source.obj.res.materials;
+        if (stashTotal === 0) {
+            gameState.stashes = gameState.stashes.filter(s => s !== source.obj);
+        }
+    } else {
+        source.obj.cargoRes[resType] -= taken;
+    }
+
+    // Тратим ход бойца на пополнение
+    u.hasMoved = true;
+    gameState.state = 'IDLE';
+    gameState.selectedUnit = null; 
+    
+    alert(`Запасы успешно пополнены: +${taken} шт.`);
+    
+    updateUI();
+    renderAll();
+};
