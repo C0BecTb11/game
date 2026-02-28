@@ -134,6 +134,31 @@ function updateUI() {
         }
     }
 }
+            // --- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА СНАБЖЕНИЯ ---
+            const supplyContainer = document.getElementById('ui-supply-container');
+            if (supplyContainer) {
+                if (u.type.id === 'supply') {
+                    supplyContainer.classList.remove('hidden');
+                    
+                    if (!u.cargoRes) u.cargoRes = { medkits: 0, mines: 0, materials: 0 };
+                    let total = u.cargoRes.medkits + u.cargoRes.mines + u.cargoRes.materials;
+                    
+                    document.getElementById('sup-total').innerText = total;
+                    document.getElementById('sup-med').innerText = u.cargoRes.medkits;
+                    document.getElementById('sup-mine').innerText = u.cargoRes.mines;
+                    document.getElementById('sup-mat').innerText = u.cargoRes.materials;
+                    
+                    const baseControls = document.getElementById('sup-base-controls');
+                    // Если грузовик стоит на своей базе (зоне высадки), показываем кнопки погрузки
+                    if (isValidSpawn(u.x, u.y, window.myPlayerId) && u.owner === window.myPlayerId) {
+                        baseControls.classList.remove('hidden');
+                    } else {
+                        baseControls.classList.add('hidden');
+                    }
+                } else {
+                    supplyContainer.classList.add('hidden');
+                }
+            }
 
 // ДОБАВЛЕН ФЛАГ isHeal ДЛЯ ЗЕЛЕНОГО ЦВЕТА УВЕДОМЛЕНИЙ
 function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = false) {
