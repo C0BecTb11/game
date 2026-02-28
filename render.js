@@ -143,8 +143,14 @@ function updateUI() {
                     document.getElementById('sup-mat').innerText = u.cargoRes.materials;
                     
                     const baseControls = document.getElementById('sup-base-controls');
-                    // Если грузовик стоит на своей базе (зоне высадки), показываем кнопки погрузки
-                    if (isValidSpawn(u.x, u.y, window.myPlayerId) && u.owner === window.myPlayerId) {
+                    
+                    // ИСПРАВЛЕНИЕ: Прямая проверка координат базы (без проверки на пустоту клетки)
+                    let radius = GRID_SIZE <= 15 ? 1 : 4; 
+                    let isAtBase = false;
+                    if (window.myPlayerId === 1 && u.x <= radius && u.y <= radius) isAtBase = true;
+                    if (window.myPlayerId === 2 && u.x >= GRID_SIZE - (radius + 1) && u.y >= GRID_SIZE - (radius + 1)) isAtBase = true;
+                    
+                    if (isAtBase && u.owner === window.myPlayerId) {
                         baseControls.classList.remove('hidden');
                     } else {
                         baseControls.classList.add('hidden');
@@ -153,13 +159,6 @@ function updateUI() {
                     supplyContainer.classList.add('hidden');
                 }
             }
-            
-            panel.classList.remove('hidden');
-        } else {
-            panel.classList.add('hidden');
-        }
-    }
-}
 
 // ДОБАВЛЕН ФЛАГ isHeal ДЛЯ ЗЕЛЕНОГО ЦВЕТА УВЕДОМЛЕНИЙ
 function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = false) {
