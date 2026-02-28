@@ -195,6 +195,26 @@ function updateUI() {
     }
 }
 
+          // Управление автопилотом
+                    const btnSetRoute = document.getElementById('btn-set-route');
+                    const btnCancelRoute = document.getElementById('btn-cancel-route');
+                    if (btnSetRoute && btnCancelRoute) {
+                        if (u.autopilotTarget) {
+                            btnSetRoute.classList.add('hidden');
+                            btnCancelRoute.classList.remove('hidden');
+                        } else {
+                            btnCancelRoute.classList.add('hidden');
+                            btnSetRoute.classList.remove('hidden');
+                            if (gameState.state === 'SETTING_ROUTE') {
+                                btnSetRoute.innerText = "ОТМЕНА";
+                                btnSetRoute.style.background = "#aaa";
+                            } else {
+                                btnSetRoute.innerText = "📍 Указать цель";
+                                btnSetRoute.style.background = "#1976d2";
+                            }
+                        }
+                    }
+
 function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = false) {
     const notif = document.getElementById('combat-notification');
     let dmgElem = document.getElementById('notif-dmg');
@@ -309,6 +329,28 @@ function renderAll() {
                 }
             }
         }
+    }
+
+        // --- ПОДСВЕТКА ВЫБОРА МАРШРУТА ---
+    if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
+        ctx.fillStyle = 'rgba(25, 118, 210, 0.2)'; 
+        ctx.fillRect(0, 0, GRID_SIZE * TILE_SIZE, GRID_SIZE * TILE_SIZE); // Слегка синим всю карту
+    }
+
+    // --- ОТРИСОВКА ЛИНИИ АВТОПИЛОТА ---
+    if (gameState.selectedUnit && gameState.selectedUnit.autopilotTarget) {
+        ctx.beginPath();
+        ctx.moveTo(gameState.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2);
+        ctx.lineTo(gameState.selectedUnit.autopilotTarget.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.autopilotTarget.y * TILE_SIZE + TILE_SIZE / 2);
+        ctx.strokeStyle = '#64b5f6';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 10]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Рисуем крестик в точке назначения
+        ctx.fillStyle = '#ffaa00';
+        ctx.fillRect(gameState.selectedUnit.autopilotTarget.x * TILE_SIZE + TILE_SIZE/2 - 6, gameState.selectedUnit.autopilotTarget.y * TILE_SIZE + TILE_SIZE/2 - 6, 12, 12);
     }
     
     if (gameState.selectedUnit && !gameState.selectedUnit.hasMoved && gameState.state !== 'PLACING_MINE') {
