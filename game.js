@@ -645,3 +645,31 @@ window.dropCargo = function(index) {
     updateUI();
     renderAll();
 };
+
+// === ЛОГИКА МАШИНЫ СНАБЖЕНИЯ ===
+window.changeSupply = function(resourceType) {
+    let u = gameState.selectedUnit;
+    if (!u || u.type.id !== 'supply') return;
+    
+    // Если у машины еще нет инвентаря, создаем его
+    if (!u.cargoRes) u.cargoRes = { medkits: 0, mines: 0, materials: 0 };
+    
+    let total = u.cargoRes.medkits + u.cargoRes.mines + u.cargoRes.materials;
+    
+    if (total < u.type.maxCargo) {
+        u.cargoRes[resourceType]++;
+        updateUI();
+        renderAll();
+    } else {
+        alert("Кузов заполнен! Максимум 10 ящиков.");
+    }
+};
+
+window.clearSupply = function() {
+    let u = gameState.selectedUnit;
+    if (!u || u.type.id !== 'supply') return;
+    
+    u.cargoRes = { medkits: 0, mines: 0, materials: 0 };
+    updateUI();
+    renderAll();
+};
