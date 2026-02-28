@@ -41,7 +41,8 @@ const UNIT_TYPES = {
     },
     SUPPLY: { 
         id: 'supply', name: "Снабжение", imgSrc: "./images/team-r-supply.png", 
-        cost: 120, maxHp: 12, attack: 0, attackRange: 0, moveRange: 5, visionRange: 6, canCapture: false 
+        cost: 120, maxHp: 12, attack: 0, attackRange: 0, moveRange: 5, visionRange: 6, canCapture: false,
+        maxCargo: 10 
     },
     BTR: { 
         id: 'btr', name: "БТР", imgSrc: "./images/team-r-btr.png", 
