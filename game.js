@@ -420,6 +420,20 @@ function handleMapClick(e) {
         }
         return;
     }
+
+        // === ЛОГИКА АВТОПИЛОТА (ЗАДАЕМ ЦЕЛЬ) ===
+    if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
+        if (isPassable(x, y, gameState.selectedUnit) || getUnitAt(x, y)) {
+            gameState.selectedUnit.autopilotTarget = { x: x, y: y };
+            gameState.state = 'IDLE';
+            updateUI();
+            renderAll();
+        } else {
+            alert("Недопустимая точка для автопилота!");
+            gameState.state = 'IDLE';
+        }
+        return;
+    }
     
     if (gameState.state === 'PLACING_UNIT' && gameState.unitToPlace) {
         if (isValidSpawn(x, y, gameState.turn)) {
@@ -612,10 +626,50 @@ function attackUnit(attacker, target) {
 
 function endTurn() {
     if (gameState.turn !== window.myPlayerId) return;
+    
+    // ПРОЦЕССИНГ АВТОПИЛОТА (Едем перед завершением хода)
+    gameState.units.forEach(u => {
+        if (u.owner === gameState.turn && u.autopilotTarget && !u.hasMoved) {
+            let movesLeft = u.type.moveRange;
+            while(movesLeft > 0) {
+                let dx = Math.sign(u.autopilotTarget.x - u.x);
+                let dy = Math.sign(u.autopilotTarget.y - u.y);
+                
+                if (dx === 0 && dy === 0) {
+                    u.autopilotTarget = null; // Приехали!
+                    break; 
+                }
+                
+                let nx = u.x;
+                let ny = u.y;
+                
+                // Шагаем по координатам
+                if (dx !== 0 && isPassable(u.x + dx, u.y, u) && !getUnitAt(u.x + dx, u.y)) nx = u.x + dx;
+                else if (dy !== 0 && isPassable(u.x, u.y + dy, u) && !getUnitAt(u.x, u.y + dy)) ny = u.y + dy;
+                else break; // Уперлись в препятствие (танк или здание)
+                
+                u.x = nx;
+                u.y = ny;
+                movesLeft--;
+                
+                // Проверка на мины по пути автопилота!
+                let mineIdx = gameState.mines.findIndex(m => m.x === nx && m.y === ny);
+                if (mineIdx !== -1) {
+                    let m = gameState.mines[mineIdx];
+                    gameState.mines.splice(mineIdx, 1);
+                    u.hp -= m.damage;
+                    if(typeof showCombatNotification === 'function') showCombatNotification(m.damage, u.hp, u.type.name, false);
+                    if (u.hp <= 0) { gameState.units = gameState.units.filter(unit => unit !== u); break; }
+                }
+            }
+        }
+    });
+
     capturePoints.forEach(pt => {
         const occupier = getUnitAt(pt.x, pt.y);
         if (occupier && occupier.type.canCapture) pt.owner = occupier.owner;
     });
+    
     let income = 20;
     capturePoints.forEach(pt => { if (pt.owner === gameState.turn) income += 15; });
     gameState.players[gameState.turn].points += income;
