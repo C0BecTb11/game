@@ -43,7 +43,7 @@ function startGame(mapType, networkData = null) {
                 1: { points: 100, color: '#ff5555', name: myName },
                 2: { points: 100, color: '#5555ff', name: 'Ожидание...' }
             },
-            units: [], selectedUnit: null, unitToPlace: null, mines: [] // <-- Добавили хранилище мин
+            units: [], selectedUnit: null, unitToPlace: null, mines: [], stashes: [] // <--
         };
         
         generateMap(mapType);
@@ -98,7 +98,8 @@ window.applyNetworkState = function(newState, newMap, newPoints) {
     }
 
     if (newState) gameState = newState;
-    if (!gameState.mines) gameState.mines = []; 
+    if (!gameState.mines) gameState.mines = [];
+    if (!gameState.stashes) gameState.stashes = [];
     if (newMap) gameMap = newMap;
     if (newPoints) capturePoints = newPoints;
     
@@ -396,6 +397,29 @@ function handleMapClick(e) {
         renderAll();
         return;
         }
+
+        // === ЛОГИКА УСТАНОВКИ СКЛАДА ===
+    if (gameState.state === 'PLACING_STASH' && gameState.selectedUnit) {
+        let dist = Math.max(Math.abs(gameState.selectedUnit.x - x), Math.abs(gameState.selectedUnit.y - y));
+        // Можно ставить на свободную клетку или прямо под себя
+        if (dist <= 1 && isPassable(x, y, gameState.selectedUnit) && !getUnitAt(x, y)) {
+            if (gameState.stashes.find(s => s.x === x && s.y === y)) {
+                alert("Здесь уже есть склад!");
+                return;
+            }
+            gameState.stashes.push({
+                x: x, y: y,
+                res: { medkits: 0, mines: 0, materials: 0 }
+            });
+            gameState.state = 'IDLE';
+            updateUI();
+            renderAll();
+        } else {
+            alert("Недопустимая клетка для зоны выгрузки!");
+            gameState.state = 'IDLE';
+        }
+        return;
+    }
     
     if (gameState.state === 'PLACING_UNIT' && gameState.unitToPlace) {
         if (isValidSpawn(x, y, gameState.turn)) {
@@ -682,6 +706,49 @@ window.clearSupply = function() {
     if (!u || u.type.id !== 'supply') return;
     
     u.cargoRes = { medkits: 0, mines: 0, materials: 0 };
+    updateUI();
+    renderAll();
+};
+
+window.toggleStashPlacement = function() {
+    if (gameState.state === 'PLACING_STASH') {
+        gameState.state = 'IDLE';
+    } else {
+        gameState.state = 'PLACING_STASH';
+    }
+    updateUI();
+    renderAll();
+};
+
+window.transferRes = function(resType, direction) {
+    let u = gameState.selectedUnit;
+    if (!u || u.type.id !== 'supply') return;
+    
+    // Ищем склад в радиусе 1 клетки
+    let stash = gameState.stashes.find(s => Math.max(Math.abs(s.x - u.x), Math.abs(s.y - u.y)) <= 1);
+    if (!stash) return;
+
+    if (direction === 'to_stash') {
+        if (u.cargoRes[resType] > 0) {
+            u.cargoRes[resType]--;
+            stash.res[resType]++;
+        }
+    } else if (direction === 'to_truck') {
+        let total = u.cargoRes.medkits + u.cargoRes.mines + u.cargoRes.materials;
+        if (stash.res[resType] > 0 && total < u.type.maxCargo) {
+            stash.res[resType]--;
+            u.cargoRes[resType]++;
+        } else if (total >= u.type.maxCargo) {
+            alert("Кузов заполнен!");
+        }
+    }
+
+    // Если склад полностью опустел - удаляем его с карты
+    let stashTotal = stash.res.medkits + stash.res.mines + stash.res.materials;
+    if (stashTotal === 0) {
+        gameState.stashes = gameState.stashes.filter(s => s !== stash);
+    }
+    
     updateUI();
     renderAll();
 };
