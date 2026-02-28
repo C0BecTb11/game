@@ -76,11 +76,15 @@ window.applyNetworkState = function(newState, newMap, newPoints) {
     if (newState.units) {
         newState.units.forEach(u => {
             u.type = Object.values(UNIT_TYPES).find(t => t.id === u.type.id);
-            // Восстанавливаем типы пассажиров, если они есть
+            // Восстанавливаем пассажиров
             if (u.cargo) {
                 u.cargo.forEach(passenger => {
                     passenger.type = Object.values(UNIT_TYPES).find(t => t.id === passenger.type.id);
                 });
+            }
+            // Гарантируем, что у снабжения не пропадет объект груза при передаче по сети
+            if (u.type.id === 'supply' && !u.cargoRes) {
+                u.cargoRes = { medkits: 0, mines: 0, materials: 0 };
             }
         });
     }
