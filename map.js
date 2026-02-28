@@ -1,7 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let GRID_SIZE = 60; // Карта увеличена в 2 раза! (60x60)
+let GRID_SIZE = 80; // Карта 80x80
 let TILE_SIZE = 40; 
 
 const TILES = {
@@ -20,24 +20,21 @@ function generateMap(mapType) {
     gameMap = [];
     capturePoints = [];
     
-    // 🔥 РУБИЛЬНИК ДЛЯ ТЕСТОВ: 
-    // Пока эта строка раскомментирована, игра всегда создает маленькую арену 15x15
-    mapType = 'test'; 
+    // 🔥 РУБИЛЬНИК ДЛЯ ТЕСТОВ ОТКЛЮЧЕН
+    // mapType = 'test'; 
 
     if (mapType === 'test') {
-        GRID_SIZE = 15; // Компактный размер для быстрых боев
-        TILE_SIZE = 45; // Чуть увеличим масштаб тайла
+        GRID_SIZE = 15; 
+        TILE_SIZE = 45; 
         generateTestArena(); 
     } else {
-        GRID_SIZE = 60; // Наша гигантская карта
+        GRID_SIZE = 80; 
         TILE_SIZE = 40;
         generateOrganicMainMap(); 
     }
 }
 
-// === НОВАЯ УДОБНАЯ ТЕСТОВАЯ АРЕНА (15x15) ===
 function generateTestArena() {
-    // 1. Заливаем всё асфальтом для скорости передвижения
     for (let y = 0; y < GRID_SIZE; y++) {
         let row = [];
         for (let x = 0; x < GRID_SIZE; x++) {
@@ -46,24 +43,21 @@ function generateTestArena() {
         gameMap.push(row);
     }
     
-    // 2. Ставим "бетонную коробку" по центру для тестов линии видимости
     for (let y = 6; y <= 8; y++) {
         for (let x = 6; x <= 8; x++) {
             gameMap[y][x].type = TILES.BUILDING;
         }
     }
-    gameMap[7][7].type = TILES.ROAD; // Делаем "внутренний дворик" в здании
+    gameMap[7][7].type = TILES.ROAD; 
     
-    // 3. Парочка точек захвата
     addCapturePoint(7, 3);
     addCapturePoint(7, 11);
     
-    // 4. Базы игроков
     clearBaseArea(2, 2, 2); 
     clearBaseArea(GRID_SIZE - 3, GRID_SIZE - 3, 2);
 }
 
-// === ГЕНЕРАТОР ГИГАНТСКОЙ СИММЕТРИЧНОЙ КАРТЫ ===
+// === ГЕНЕРАТОР КАРТЫ С 3 МОСТАМИ (80x80) ===
 function generateOrganicMainMap() {
     // 1. Заливаем всё лесом/пустошью
     for (let y = 0; y < GRID_SIZE; y++) {
@@ -76,31 +70,46 @@ function generateOrganicMainMap() {
 
     // 2. Река (Симметричная синусоида)
     for (let x = 0; x < GRID_SIZE; x++) {
-        // Настраиваем фазу, чтобы изгибы реки были одинаковыми для обеих сторон
-        let riverY = Math.floor(GRID_SIZE / 2 + Math.sin((x - GRID_SIZE/2) / 8) * 5); 
+        let riverY = Math.floor(GRID_SIZE / 2 + Math.sin((x - GRID_SIZE/2) / 10) * 6); 
         if (riverY >= 0 && riverY < GRID_SIZE) gameMap[riverY][x].type = TILES.WATER;
         if (riverY + 1 >= 0 && riverY + 1 < GRID_SIZE) gameMap[riverY + 1][x].type = TILES.WATER;
         if (riverY + 2 >= 0 && riverY + 2 < GRID_SIZE) gameMap[riverY + 2][x].type = TILES.WATER;
     }
 
-    // 3. Широкая центральная трасса (Мост)
-    let mainRoadX = Math.floor(GRID_SIZE / 2) - 1;
+    // 3. ТРИ трассы (Левый, Центральный и Правый мосты)
+    let leftRoadX = Math.floor(GRID_SIZE / 4) - 1;       // На отметке 25% (x=19)
+    let centerRoadX = Math.floor(GRID_SIZE / 2) - 1;     // На отметке 50% (x=39)
+    let rightRoadX = Math.floor(GRID_SIZE * 3 / 4) - 1;  // На отметке 75% (x=59)
+
     for (let y = 0; y < GRID_SIZE; y++) {
-        gameMap[y][mainRoadX].type = TILES.ROAD;
-        gameMap[y][mainRoadX + 1].type = TILES.ROAD;
-        gameMap[y][mainRoadX + 2].type = TILES.ROAD;
+        // Левая
+        gameMap[y][leftRoadX].type = TILES.ROAD;
+        gameMap[y][leftRoadX + 1].type = TILES.ROAD;
+        gameMap[y][leftRoadX + 2].type = TILES.ROAD;
+        
+        // Центральная
+        gameMap[y][centerRoadX].type = TILES.ROAD;
+        gameMap[y][centerRoadX + 1].type = TILES.ROAD;
+        gameMap[y][centerRoadX + 2].type = TILES.ROAD;
+
+        // Правая
+        gameMap[y][rightRoadX].type = TILES.ROAD;
+        gameMap[y][rightRoadX + 1].type = TILES.ROAD;
+        gameMap[y][rightRoadX + 2].type = TILES.ROAD;
     }
 
-    // Вспомогательная функция: проверяет, свободна ли зона от важных объектов
+    // Вспомогательная функция защиты зон
     function isAreaFree(startX, startY, w, h) {
-        // Защитная зона вокруг баз игроков (радиус 10 клеток)
-        if (startX < 10 && startY < 10) return false;
-        if (startX + w > GRID_SIZE - 10 && startY + h > GRID_SIZE - 10) return false;
+        // Защитная зона вокруг баз игроков
+        if (startX < 12 && startY < 12) return false;
+        if (startX + w > GRID_SIZE - 12 && startY + h > GRID_SIZE - 12) return false;
 
-        // Защитная зона вдоль главной дороги (чтобы не блокировать мост и проезд)
-        if (startX + w >= mainRoadX - 2 && startX <= mainRoadX + 4) return false;
+        // Защитная зона вдоль ТРЕХ дорог, чтобы здания их не перекрыли
+        if (startX + w >= leftRoadX - 2 && startX <= leftRoadX + 4) return false;
+        if (startX + w >= centerRoadX - 2 && startX <= centerRoadX + 4) return false;
+        if (startX + w >= rightRoadX - 2 && startX <= rightRoadX + 4) return false;
 
-        // Проверка наложения на реку или другие здания
+        // Проверка наложения
         for(let dy = 0; dy < h; dy++) {
             for(let dx = 0; dx < w; dx++) {
                 let ny = startY + dy;
@@ -113,26 +122,23 @@ function generateOrganicMainMap() {
         return true;
     }
 
-    // 4. Индустриальные зоны (Генерируем зеркально)
-    let factoriesToPlace = 8; // 8 пар = 16 заводов на карте
+    // 4. Индустриальные зоны (Заводы)
+    let factoriesToPlace = 10; // 10 пар = 20 заводов
     let attempts = 0;
-    while (factoriesToPlace > 0 && attempts < 200) {
+    while (factoriesToPlace > 0 && attempts < 300) {
         attempts++;
-        let w = 4 + Math.floor(Math.random() * 5); // Ширина от 4 до 8
-        let h = 3 + Math.floor(Math.random() * 4); // Высота от 3 до 6
+        let w = 4 + Math.floor(Math.random() * 5); 
+        let h = 3 + Math.floor(Math.random() * 4); 
         
-        // Генерируем координаты только для ВЕРХНЕЙ ЛЕВОЙ половины карты
         let startX = Math.floor(Math.random() * (GRID_SIZE / 2 - w));
         let startY = Math.floor(Math.random() * (GRID_SIZE - h));
 
         if (isAreaFree(startX, startY, w, h)) {
-            // Строим завод для Игрока 1 (сверху-слева)
             for(let dy = 0; dy < h; dy++) {
                 for(let dx = 0; dx < w; dx++) {
                     gameMap[startY + dy][startX + dx].type = TILES.FACTORY;
                 }
             }
-            // Высчитываем координаты для зеркального завода Игрока 2 (снизу-справа)
             let mirrorX = GRID_SIZE - startX - w;
             let mirrorY = GRID_SIZE - startY - h;
             for(let dy = 0; dy < h; dy++) {
@@ -144,10 +150,10 @@ function generateOrganicMainMap() {
         }
     }
 
-    // 5. Разбросанные постройки (Также генерируем парами)
-    let buildingsToPlace = 60; // 60 пар = 120 зданий
+    // 5. Разбросанные постройки (Укрытия)
+    let buildingsToPlace = 80; 
     attempts = 0;
-    while (buildingsToPlace > 0 && attempts < 500) {
+    while (buildingsToPlace > 0 && attempts < 600) {
         attempts++;
         let rx = Math.floor(Math.random() * (GRID_SIZE / 2));
         let ry = Math.floor(Math.random() * GRID_SIZE);
@@ -163,38 +169,23 @@ function generateOrganicMainMap() {
         }
     }
 
-    // 6. Расставляем стратегические точки (Абсолютно симметрично)
-    addCapturePoint(mainRoadX + 1, Math.floor(GRID_SIZE/2)); // Центральная на мосту
+    // 6. Расставляем стратегические точки
+    // Три точки прямо на мостах (самые горячие зоны)
+    addCapturePoint(leftRoadX + 1, Math.floor(GRID_SIZE/2)); 
+    addCapturePoint(centerRoadX + 1, Math.floor(GRID_SIZE/2)); 
+    addCapturePoint(rightRoadX + 1, Math.floor(GRID_SIZE/2)); 
     
-    // Ближние точки
-    addCapturePoint(10, 15);
-    addCapturePoint(49, 44); // 59 - 10 = 49, 59 - 15 = 44
+    // Ближние к базам точки (для стартового дохода)
+    addCapturePoint(12, 18);
+    addCapturePoint(GRID_SIZE - 13, GRID_SIZE - 19); 
     
-    // Фланговые точки у реки
-    addCapturePoint(18, 5);
-    addCapturePoint(41, 54);
-    
-    // Дальние обходные точки
-    addCapturePoint(25, 38);
-    addCapturePoint(34, 21);
+    // Глубокие фланговые точки
+    addCapturePoint(8, Math.floor(GRID_SIZE/2) - 15);
+    addCapturePoint(GRID_SIZE - 9, Math.floor(GRID_SIZE/2) + 15);
 
-    // 7. Базы игроков (Гарантированно расчищаем бетонные площадки 9x9)
+    // 7. Базы игроков
     clearBaseArea(2, 2, 4);
     clearBaseArea(GRID_SIZE - 3, GRID_SIZE - 3, 4);
-}
-
-// Старая тестовая площадка 10x10 (оставил на всякий случай)
-function generateTestMap() {
-    for (let y = 0; y < GRID_SIZE; y++) {
-        let row = [];
-        for (let x = 0; x < GRID_SIZE; x++) {
-            let type = (x % 2 === 0 && y % 2 === 0) ? TILES.BUILDING : TILES.ROAD;
-            row.push({ type: type });
-        }
-        gameMap.push(row);
-    }
-    addCapturePoint(4, 4); addCapturePoint(2, 7); addCapturePoint(7, 2);
-    clearBaseArea(0, 0, 1); clearBaseArea(GRID_SIZE - 1, GRID_SIZE - 1, 1);
 }
 
 function addCapturePoint(x, y) {
@@ -256,8 +247,8 @@ function drawMap() {
 
 function drawSpawnZone(x, y, color) {
     ctx.fillStyle = color;
-    let zoneSize = GRID_SIZE <= 15 ? 2 : 5; // Сделал так, чтобы зона высадки на мелкой карте была 2x2
+    let zoneSize = GRID_SIZE <= 15 ? 2 : 5; // Зона высадки на мелкой карте 2x2, на большой - 5x5
     let startX = x === 0 ? 0 : x - zoneSize + 1;
     let startY = y === 0 ? 0 : y - zoneSize + 1;
     ctx.fillRect(startX * TILE_SIZE, startY * TILE_SIZE, TILE_SIZE * zoneSize, TILE_SIZE * zoneSize);
-        }
+}
