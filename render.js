@@ -153,6 +153,36 @@ function updateUI() {
                     } else {
                         baseControls.classList.add('hidden');
                     }
+                                        // Управление Складом
+                    const btnCreateStash = document.getElementById('btn-create-stash');
+                    const stashControls = document.getElementById('sup-stash-controls');
+                    
+                    let adjStash = null;
+                    if (gameState.stashes) {
+                        adjStash = gameState.stashes.find(s => Math.max(Math.abs(s.x - u.x), Math.abs(s.y - u.y)) <= 1);
+                    }
+
+                    if (adjStash) {
+                        btnCreateStash.classList.add('hidden');
+                        stashControls.classList.remove('hidden');
+                        document.getElementById('stash-med').innerText = adjStash.res.medkits;
+                        document.getElementById('stash-mine').innerText = adjStash.res.mines;
+                        document.getElementById('stash-mat').innerText = adjStash.res.materials;
+                    } else {
+                        stashControls.classList.add('hidden');
+                        if (!isAtBase) { // Разрешаем строить склад только вне базы
+                            btnCreateStash.classList.remove('hidden');
+                            if (gameState.state === 'PLACING_STASH') {
+                                btnCreateStash.innerText = "ОТМЕНА";
+                                btnCreateStash.style.background = "#aaa";
+                            } else {
+                                btnCreateStash.innerText = "📦 Развернуть зону выгрузки";
+                                btnCreateStash.style.background = "#2e7d32";
+                            }
+                        } else {
+                            btnCreateStash.classList.add('hidden');
+                        }
+                    }
                 } else {
                     supplyContainer.classList.add('hidden');
                 }
@@ -242,6 +272,39 @@ function renderAll() {
                 let ny = gameState.selectedUnit.y + dy;
                 if (isPassable(nx, ny, gameState.selectedUnit) && !getUnitAt(nx, ny)) {
                     ctx.fillStyle = 'rgba(255, 170, 0, 0.4)';
+                    ctx.fillRect(nx * TILE_SIZE, ny * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+        }
+    }
+
+        // --- ОТРИСОВКА СКЛАДОВ ---
+    if (gameState.stashes) {
+        gameState.stashes.forEach(s => {
+            if (visibleMap[s.y][s.x]) {
+                ctx.fillStyle = '#8B4513'; // Коричневый ящик
+                ctx.fillRect(s.x * TILE_SIZE + 6, s.y * TILE_SIZE + 6, TILE_SIZE - 12, TILE_SIZE - 12);
+                ctx.fillStyle = '#D2B48C'; // Светлые полоски
+                ctx.fillRect(s.x * TILE_SIZE + 10, s.y * TILE_SIZE + 10, TILE_SIZE - 20, TILE_SIZE - 20);
+                // Иконка
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('📦', s.x * TILE_SIZE + TILE_SIZE/2, s.y * TILE_SIZE + TILE_SIZE/2);
+            }
+        });
+    }
+
+    // --- ПОДСВЕТКА ЗОНЫ СОЗДАНИЯ СКЛАДА ---
+    if (gameState.state === 'PLACING_STASH' && gameState.selectedUnit) {
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                let nx = gameState.selectedUnit.x + dx;
+                let ny = gameState.selectedUnit.y + dy;
+                // Зона выгрузки - зеленая
+                if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && isPassable(nx, ny, gameState.selectedUnit) && !getUnitAt(nx, ny)) {
+                    ctx.fillStyle = 'rgba(46, 125, 50, 0.5)'; 
                     ctx.fillRect(nx * TILE_SIZE, ny * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
             }
