@@ -143,8 +143,6 @@ function updateUI() {
                     document.getElementById('sup-mat').innerText = u.cargoRes.materials;
                     
                     const baseControls = document.getElementById('sup-base-controls');
-                    
-                    // ИСПРАВЛЕНИЕ: Прямая проверка координат базы (без проверки на пустоту клетки)
                     let radius = GRID_SIZE <= 15 ? 1 : 4; 
                     let isAtBase = false;
                     if (window.myPlayerId === 1 && u.x <= radius && u.y <= radius) isAtBase = true;
@@ -160,7 +158,13 @@ function updateUI() {
                 }
             }
 
-// ДОБАВЛЕН ФЛАГ isHeal ДЛЯ ЗЕЛЕНОГО ЦВЕТА УВЕДОМЛЕНИЙ
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+}
+
 function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = false) {
     const notif = document.getElementById('combat-notification');
     let dmgElem = document.getElementById('notif-dmg');
@@ -206,7 +210,6 @@ function renderAll() {
     let visibleMap = getVisibleMap();
     let viewPlayer = window.myPlayerId;
 
-    // Отрисовка тумана войны
     for (let y = 0; y < GRID_SIZE; y++) {
         for (let x = 0; x < GRID_SIZE; x++) {
             if (!visibleMap[y][x]) {
@@ -216,7 +219,6 @@ function renderAll() {
         }
     }
 
-    // --- ОТРИСОВКА МИН (Теперь они независимы и видны всегда) ---
     if (gameState.mines) {
         gameState.mines.forEach(m => {
             if (m.owner === viewPlayer) {
@@ -232,7 +234,6 @@ function renderAll() {
         });
     }
 
-    // --- ПОДСВЕТКА ЗОНЫ УСТАНОВКИ МИНЫ ---
     if (gameState.state === 'PLACING_MINE' && gameState.selectedUnit) {
         for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
@@ -240,14 +241,13 @@ function renderAll() {
                 let nx = gameState.selectedUnit.x + dx;
                 let ny = gameState.selectedUnit.y + dy;
                 if (isPassable(nx, ny, gameState.selectedUnit) && !getUnitAt(nx, ny)) {
-                    ctx.fillStyle = 'rgba(255, 170, 0, 0.4)'; // Оранжевая зона для мины
+                    ctx.fillStyle = 'rgba(255, 170, 0, 0.4)';
                     ctx.fillRect(nx * TILE_SIZE, ny * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
             }
         }
     }
     
-    // Подсветка ходов, атак и лечения (если мы не в режиме минирования)
     if (gameState.selectedUnit && !gameState.selectedUnit.hasMoved && gameState.state !== 'PLACING_MINE') {
         let reachable = getReachableCells(gameState.selectedUnit);
         ctx.fillStyle = 'rgba(0, 200, 255, 0.3)';
@@ -269,13 +269,12 @@ function renderAll() {
             }
         }
 
-        // --- ПОДСВЕТКА ЦЕЛЕЙ ДЛЯ ЛЕЧЕНИЯ ---
         if (gameState.selectedUnit.type.id === 'medic' && gameState.selectedUnit.medkits > 0) {
             gameState.units.forEach(u => {
                 if (u.owner === gameState.turn && u.type.isInfantry && u.hp < u.type.maxHp && u !== gameState.selectedUnit) {
                     let dist = Math.max(Math.abs(gameState.selectedUnit.x - u.x), Math.abs(gameState.selectedUnit.y - u.y));
                     if (dist <= 1) {
-                        ctx.fillStyle = 'rgba(0, 255, 0, 0.4)'; // Зеленая зона вокруг раненых
+                        ctx.fillStyle = 'rgba(0, 255, 0, 0.4)'; 
                         ctx.fillRect(u.x * TILE_SIZE, u.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                     }
                 }
@@ -283,7 +282,6 @@ function renderAll() {
         }
     }
 
-    // Отрисовка выделения и лазерных прицелов
     if (gameState.selectedUnit) {
         ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
         ctx.fillRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -316,7 +314,6 @@ function renderAll() {
         }
     }
 
-    // Отрисовка всех юнитов
     gameState.units.forEach(u => {
         if (u.owner !== viewPlayer && !visibleMap[u.y][u.x]) return;
 
@@ -351,4 +348,4 @@ function renderAll() {
     });
 
     ctx.restore(); 
-                                         }
+}
