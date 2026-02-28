@@ -1,57 +1,57 @@
 const UNIT_TYPES = {
     SOLDIER: { 
         id: 'soldier', name: "Пехота", imgSrc: "./images/team-r-soldier.png", 
-        cost: 50, maxHp: 10, attack: 2, attackRange: 1, moveRange: 2, visionRange: 4, canCapture: true,
+        cost: 20, maxHp: 10, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true,
         isInfantry: true 
     },
     RPK: { 
         id: 'rpk', name: "Пулемет", imgSrc: "./images/team-r-rpk.png", 
-        cost: 80, maxHp: 15, attack: 5, attackRange: 2, moveRange: 1, visionRange: 3, canCapture: true,
+        cost: 50, maxHp: 15, attack: 5, attackRange: 4, moveRange: 3, visionRange: 5, canCapture: true,
         isInfantry: true 
     },
     RPG: { 
         id: 'rpg', name: "Гранатометчик", imgSrc: "./images/team-r-rpg.png", 
-        cost: 100, maxHp: 8, attack: 2, attackRange: 2, moveRange: 2, visionRange: 3, canCapture: true, 
+        cost: 50, maxHp: 15, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true, 
         bonusArmorDamage: 13, isInfantry: true 
     },
     MEDIC: { 
         id: 'medic', name: "Медик", imgSrc: "./images/team-r-med.png", 
-        cost: 60, maxHp: 10, attack: 1, attackRange: 1, moveRange: 3, visionRange: 4, canCapture: true,
+        cost: 70, maxHp: 8, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true,
         isInfantry: true, maxMedkits: 5, healAmount: 5 
     },
     MINER: { 
         id: 'miner', name: "Минёр", imgSrc: "./images/team-r-mine.png", 
-        cost: 70, maxHp: 10, attack: 2, attackRange: 1, moveRange: 2, visionRange: 4, canCapture: true,
-        isInfantry: true, maxMines: 3, mineDamage: 15 
+        cost: 100, maxHp: 8, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true,
+        isInfantry: true, maxMines: 3, mineDamage: 8 
     },
     SNIPER: { 
         id: 'sniper', name: "Снайпер", imgSrc: "./images/team-r-sniper.png", 
-        cost: 150, maxHp: 8, attack: 15, attackRange: 5, moveRange: 2, visionRange: 6, canCapture: false,
+        cost: 175, maxHp: 8, attack: 8, attackRange: 5, moveRange: 2, visionRange: 6, canCapture: true,
         isInfantry: true 
     },
     SPECNAZ: { 
         id: 'specnaz', name: "Спецназ", imgSrc: "./images/team-r-spec.png", 
-        cost: 200, maxHp: 15, attack: 8, attackRange: 2, moveRange: 3, visionRange: 5, canCapture: true,
+        cost: 150, maxHp: 15, attack: 8, attackRange: 4, moveRange: 4, visionRange: 5, canCapture: true,
         isInfantry: true 
     },
     TRANSPORT: { 
         id: 'transport', name: "Транспортник", imgSrc: "./images/team-r-peh.png", 
-        cost: 150, maxHp: 12, attack: 0, attackRange: 0, moveRange: 6, visionRange: 5, canCapture: false, 
+        cost: 60, maxHp: 8, attack: 0, attackRange: 0, moveRange: 7, visionRange: 5, canCapture: false, 
         isArmor: true, transportCapacity: 2 
     },
     SUPPLY: { 
         id: 'supply', name: "Снабжение", imgSrc: "./images/team-r-supply.png", 
-        cost: 120, maxHp: 12, attack: 0, attackRange: 0, moveRange: 3, visionRange: 6, canCapture: false,
+        cost: 80, maxHp: 8, attack: 0, attackRange: 0, moveRange: 3, visionRange: 4, canCapture: false,
         maxCargo: 10 
     },
     BTR: { 
         id: 'btr', name: "БТР", imgSrc: "./images/team-r-btr.png", 
-        cost: 250, maxHp: 25, attack: 5, attackRange: 3, moveRange: 4, visionRange: 6, canCapture: false, 
+        cost: 200, maxHp: 30, attack: 5, attackRange: 3, moveRange: 4, visionRange: 6, canCapture: false, 
         isArmor: true, transportCapacity: 1 
     },
     TANK: { 
         id: 'tank', name: "Танк", imgSrc: "./images/team-r-tank.png", 
-        cost: 500, maxHp: 50, attack: 12, attackRange: 4, moveRange: 3, visionRange: 5, canCapture: false, 
+        cost: 350, maxHp: 50, attack: 12, attackRange: 3, moveRange: 4, visionRange: 5, canCapture: false, 
         isArmor: true 
     }
 };
