@@ -110,6 +110,35 @@
                             <div title="Аптечки">💊 <span id="sup-med" style="font-size: 0.9rem;">0</span></div>
                             <div title="Мины">💣 <span id="sup-mine" style="font-size: 0.9rem;">0</span></div>
                             <div title="Стройматериалы">🧱 <span id="sup-mat" style="font-size: 0.9rem;">0</span></div>
+                                                    <button id="btn-create-stash" class="hidden" onclick="toggleStashPlacement()" style="width: 100%; margin-top: 5px; padding: 6px; background: #2e7d32; color: #fff; border: 1px solid #1b5e20; border-radius: 3px; cursor: pointer; font-weight: bold;">📦 Развернуть зону выгрузки</button>
+
+                        <div id="sup-stash-controls" class="hidden" style="margin-top: 10px; border-top: 1px dashed #777; padding-top: 5px;">
+                            <div style="font-size: 0.75rem; color: #ffaa00; text-align: center; margin-bottom: 5px;">СКЛАД (РЯДОМ):</div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 4px; border-radius: 4px; margin-bottom: 2px;">
+                                <span>💊 <span id="stash-med">0</span></span>
+                                <div>
+                                    <button onclick="transferRes('medkits', 'to_truck')" style="padding: 2px 6px; background: #444; color: white; border: 1px solid #666; cursor: pointer;">Взять</button>
+                                    <button onclick="transferRes('medkits', 'to_stash')" style="padding: 2px 6px; background: #2e7d32; color: white; border: 1px solid #1b5e20; cursor: pointer;">Сбросить</button>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 4px; border-radius: 4px; margin-bottom: 2px;">
+                                <span>💣 <span id="stash-mine">0</span></span>
+                                <div>
+                                    <button onclick="transferRes('mines', 'to_truck')" style="padding: 2px 6px; background: #444; color: white; border: 1px solid #666; cursor: pointer;">Взять</button>
+                                    <button onclick="transferRes('mines', 'to_stash')" style="padding: 2px 6px; background: #2e7d32; color: white; border: 1px solid #1b5e20; cursor: pointer;">Сбросить</button>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 4px; border-radius: 4px;">
+                                <span>🧱 <span id="stash-mat">0</span></span>
+                                <div>
+                                    <button onclick="transferRes('materials', 'to_truck')" style="padding: 2px 6px; background: #444; color: white; border: 1px solid #666; cursor: pointer;">Взять</button>
+                                    <button onclick="transferRes('materials', 'to_stash')" style="padding: 2px 6px; background: #2e7d32; color: white; border: 1px solid #1b5e20; cursor: pointer;">Сбросить</button>
+                                </div>
+                            </div>
+                        </div>
                         </div>
                         
                         <div id="sup-base-controls" class="hidden">
