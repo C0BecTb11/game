@@ -63,17 +63,25 @@ function startGame(mapType, networkData = null) {
 // === ОБНОВЛЕННАЯ ФУНКЦИЯ СИНХРОНИЗАЦИИ ===
 window.applyNetworkState = function(newState, newMap, newPoints) {
     // 1. ИСПРАВЛЕНИЕ: Автоматически подстраиваем размер игры под загруженную карту
-    GRID_SIZE = newMap.length; 
-    TILE_SIZE = GRID_SIZE <= 15 ? 45 : 40; 
+    if (newMap && newMap.length > 0) {
+        GRID_SIZE = newMap.length; 
+        TILE_SIZE = GRID_SIZE <= 15 ? 45 : 40; 
+    }
 
-    // 2. Восстановление ссылок на объекты после JSON
-    newMap.forEach(row => {
-        row.forEach(cell => {
-            cell.type = Object.values(TILES).find(t => t.id === cell.type.id);
+    // 2. БЕЗОПАСНОЕ Восстановление ссылок на объекты после JSON
+    if (newMap) {
+        newMap.forEach(row => {
+            if (row) {
+                row.forEach(cell => {
+                    if (cell && cell.type) {
+                        cell.type = Object.values(TILES).find(t => t.id === cell.type.id) || TILES.ROAD;
+                    }
+                });
+            }
         });
-    });
+    }
 
-    if (newState.units) {
+    if (newState && newState.units) {
         newState.units.forEach(u => {
             u.type = Object.values(UNIT_TYPES).find(t => t.id === u.type.id);
             // Восстанавливаем пассажиров
@@ -89,10 +97,10 @@ window.applyNetworkState = function(newState, newMap, newPoints) {
         });
     }
 
-    gameState = newState;
-        if (!gameState.mines) gameState.mines = []; // <-- Добавили эту строку
-    gameMap = newMap;
-    capturePoints = newPoints;
+    if (newState) gameState = newState;
+    if (!gameState.mines) gameState.mines = []; 
+    if (newMap) gameMap = newMap;
+    if (newPoints) capturePoints = newPoints;
     
     // Сбрасываем выделение, если сейчас не наш ход
     if (gameState.turn !== window.myPlayerId) {
