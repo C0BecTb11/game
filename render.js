@@ -77,6 +77,50 @@ function updateUI() {
                     btnPlaceMine.classList.add('hidden');
                 }
             }
+
+            // --- ПРОВЕРКА ВОЗМОЖНОСТИ ПОПОЛНЕНИЯ ЗАПАСОВ ---
+            const btnResupply = document.getElementById('btn-resupply');
+            if (btnResupply) {
+                let canResupply = false;
+                if (u.owner === window.myPlayerId && !u.hasMoved) {
+                    let resType = null;
+                    let needsRes = false;
+                    
+                    if (u.type.id === 'medic') {
+                        resType = 'medkits';
+                        let cur = u.medkits !== undefined ? u.medkits : u.type.maxMedkits;
+                        if (cur < u.type.maxMedkits) needsRes = true;
+                    } else if (u.type.id === 'miner') {
+                        resType = 'mines';
+                        let cur = u.mines !== undefined ? u.mines : u.type.maxMines;
+                        if (cur < u.type.maxMines) needsRes = true;
+                    }
+
+                    if (needsRes) {
+                        let hasSource = false;
+                        // Проверяем наличие Склада рядом
+                        if (gameState.stashes) {
+                            hasSource = gameState.stashes.some(s => Math.max(Math.abs(s.x - u.x), Math.abs(s.y - u.y)) <= 1 && s.res[resType] > 0);
+                        }
+                        // Проверяем наличие Грузовика рядом
+                        if (!hasSource) {
+                            hasSource = gameState.units.some(truck => 
+                                truck.owner === window.myPlayerId && 
+                                truck.type.id === 'supply' && 
+                                Math.max(Math.abs(truck.x - u.x), Math.abs(truck.y - u.y)) <= 1 &&
+                                truck.cargoRes && truck.cargoRes[resType] > 0
+                            );
+                        }
+                        canResupply = hasSource;
+                    }
+                }
+                
+                if (canResupply) {
+                    btnResupply.classList.remove('hidden');
+                } else {
+                    btnResupply.classList.add('hidden');
+                }
+            }
             
             let threats = 0;
             if (u.owner === window.myPlayerId) {
