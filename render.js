@@ -142,22 +142,22 @@ function updateUI() {
                     threatElem.classList.add('hidden');
                 }
             }
-            
+
+                        // --- ЛОГИКА ОТОБРАЖЕНИЯ ДЕСАНТА (Только для своих!) ---
             const cargoContainer = document.getElementById('ui-cargo-container');
             const cargoList = document.getElementById('ui-cargo-list');
             if (cargoContainer && cargoList) {
-                if (u.type.transportCapacity) {
+                // Добавлена проверка: u.owner === window.myPlayerId
+                if (u.type.transportCapacity && u.owner === window.myPlayerId) {
                     cargoContainer.classList.remove('hidden');
                     cargoList.innerHTML = '';
                     let cargo = u.cargo || [];
                     
                     for (let i = 0; i < u.type.transportCapacity; i++) {
                         if (cargo[i]) {
-                            let btnHtml = (u.owner === window.myPlayerId) ? 
-                                `<button onclick="dropCargo(${i})" style="padding: 2px 5px; background: #ff4444; border: 1px solid #aa0000; border-radius: 3px; color: white; cursor: pointer;">Высадить</button>` : '';
-                            
                             cargoList.innerHTML += `<div style="display: flex; justify-content: space-between; align-items: center; background: #222; padding: 4px 8px; border-radius: 4px; border: 1px solid #555; font-size: 0.85rem;">
-                                <span>${cargo[i].type.name} ❤️${cargo[i].hp}</span> ${btnHtml}
+                                <span>${cargo[i].type.name} ❤️${cargo[i].hp}</span>
+                                <button onclick="dropCargo(${i})" style="padding: 2px 5px; background: #ff4444; border: 1px solid #aa0000; border-radius: 3px; color: white; cursor: pointer;">Высадить</button>
                             </div>`;
                         } else {
                             cargoList.innerHTML += `<div style="display: flex; justify-content: center; align-items: center; background: #1a1a1a; padding: 4px 8px; border-radius: 4px; border: 1px dashed #555; color: #777; font-size: 0.85rem;">
@@ -166,14 +166,16 @@ function updateUI() {
                         }
                     }
                 } else {
+                    // Если это вражеский транспорт - скрываем блок полностью
                     cargoContainer.classList.add('hidden');
                 }
             }
 
-            // --- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА СНАБЖЕНИЯ ---
+            // --- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА СНАБЖЕНИЯ (Только для своих!) ---
             const supplyContainer = document.getElementById('ui-supply-container');
             if (supplyContainer) {
-                if (u.type.id === 'supply') {
+                // Добавлена проверка: u.owner === window.myPlayerId
+                if (u.type.id === 'supply' && u.owner === window.myPlayerId) {
                     supplyContainer.classList.remove('hidden');
                     
                     if (!u.cargoRes) u.cargoRes = { medkits: 0, mines: 0, materials: 0 };
@@ -190,7 +192,7 @@ function updateUI() {
                     if (window.myPlayerId === 1 && u.x <= radius && u.y <= radius) isAtBase = true;
                     if (window.myPlayerId === 2 && u.x >= GRID_SIZE - (radius + 1) && u.y >= GRID_SIZE - (radius + 1)) isAtBase = true;
                     
-                    if (isAtBase && u.owner === window.myPlayerId) {
+                    if (isAtBase) {
                         baseControls.classList.remove('hidden');
                     } else {
                         baseControls.classList.add('hidden');
@@ -227,10 +229,11 @@ function updateUI() {
                         }
                     }
                 } else {
+                    // Если это вражеский грузовик - скрываем его инвентарь
                     supplyContainer.classList.add('hidden');
                 }
             }
-
+            
             // --- УНИВЕРСАЛЬНЫЙ АВТОПИЛОТ ДЛЯ ВСЕХ ЮНИТОВ ---
             const autoControls = document.getElementById('sup-auto-controls');
             const btnSetRoute = document.getElementById('btn-set-route');
