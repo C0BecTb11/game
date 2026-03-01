@@ -646,45 +646,57 @@ function attackUnit(attacker, target) {
 
 function endTurn() {
     if (gameState.turn !== window.myPlayerId) return;
-    
-    // ПРОЦЕССИНГ АВТОПИЛОТА (Едем перед завершением хода)
+
+    // === ПРОЦЕССИНГ АВТОПИЛОТА (ТЕПЕРЬ С УМНЫМ ПОИСКОМ ПУТИ) ===
     gameState.units.forEach(u => {
         if (u.owner === gameState.turn && u.autopilotTarget && !u.hasMoved) {
-            let movesLeft = u.type.moveRange;
-            while(movesLeft > 0) {
-                let dx = Math.sign(u.autopilotTarget.x - u.x);
-                let dy = Math.sign(u.autopilotTarget.y - u.y);
-                
-                if (dx === 0 && dy === 0) {
-                    u.autopilotTarget = null; // Приехали!
-                    break; 
+            
+            // Автопилот использует полноценный радар (BFS алгоритм)!
+            let path = findPath(u, u.x, u.y, u.autopilotTarget.x, u.autopilotTarget.y);
+            
+            // path[0] — это текущая клетка. Смотрим, на сколько шагов хватит бензина (moveRange)
+            let steps = Math.min(u.type.moveRange, path.length - 1);
+            
+            if (steps > 0) {
+                let finalX = u.x;
+                let finalY = u.y;
+                let mineHit = null;
+
+                // Двигаемся по клеточкам и проверяем мины
+                for (let i = 1; i <= steps; i++) {
+                    finalX = path[i].x;
+                    finalY = path[i].y;
+                    let mineIdx = gameState.mines.findIndex(m => m.x === finalX && m.y === finalY);
+                    if (mineIdx !== -1) {
+                        mineHit = gameState.mines[mineIdx];
+                        gameState.mines.splice(mineIdx, 1);
+                        break; // Взрыв останавливает движение!
+                    }
                 }
-                
-                let nx = u.x;
-                let ny = u.y;
-                
-                // Шагаем по координатам
-                if (dx !== 0 && isPassable(u.x + dx, u.y, u) && !getUnitAt(u.x + dx, u.y)) nx = u.x + dx;
-                else if (dy !== 0 && isPassable(u.x, u.y + dy, u) && !getUnitAt(u.x, u.y + dy)) ny = u.y + dy;
-                else break; // Уперлись в препятствие (танк или здание)
-                
-                u.x = nx;
-                u.y = ny;
-                movesLeft--;
-                
-                // Проверка на мины по пути автопилота!
-                let mineIdx = gameState.mines.findIndex(m => m.x === nx && m.y === ny);
-                if (mineIdx !== -1) {
-                    let m = gameState.mines[mineIdx];
-                    gameState.mines.splice(mineIdx, 1);
-                    u.hp -= m.damage;
-                    if(typeof showCombatNotification === 'function') showCombatNotification(m.damage, u.hp, u.type.name, false);
-                    if (u.hp <= 0) { gameState.units = gameState.units.filter(unit => unit !== u); break; }
+
+                u.x = finalX;
+                u.y = finalY;
+                u.hasMoved = true;
+
+                // Если прибыли в точку назначения - отключаем автопилот
+                if (u.x === u.autopilotTarget.x && u.y === u.autopilotTarget.y) {
+                    u.autopilotTarget = null;
                 }
+
+                // Урон от мины
+                if (mineHit) {
+                    u.hp -= mineHit.damage;
+                    if(typeof showCombatNotification === 'function') showCombatNotification(mineHit.damage, u.hp, u.type.name, false);
+                    if (u.hp <= 0) gameState.units = gameState.units.filter(unit => unit !== u);
+                }
+            } else {
+                // Если пути совсем нет (уперлись в непробиваемую пробку из танков)
+                u.autopilotTarget = null; 
             }
         }
     });
 
+    // --- СТАНДАРТНАЯ ЛОГИКА ЗАВЕРШЕНИЯ ХОДА ---
     capturePoints.forEach(pt => {
         const occupier = getUnitAt(pt.x, pt.y);
         if (occupier && occupier.type.canCapture) pt.owner = occupier.owner;
@@ -693,10 +705,12 @@ function endTurn() {
     let income = 20;
     capturePoints.forEach(pt => { if (pt.owner === gameState.turn) income += 15; });
     gameState.players[gameState.turn].points += income;
+    
     gameState.turn = gameState.turn === 1 ? 2 : 1;
     gameState.selectedUnit = null;
     gameState.state = 'IDLE';
     gameState.unitToPlace = null;
+    
     gameState.units.forEach(u => { if (u.owner === window.myPlayerId) u.hasMoved = false; });
     
     const notif = document.getElementById('combat-notification');
@@ -705,7 +719,7 @@ function endTurn() {
     updateUI();
     renderAll();
     if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
-      }
+}
 
 // === УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ МАГАЗИНА ===
 window.toggleCategory = function(categoryId) {
