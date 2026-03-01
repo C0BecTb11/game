@@ -457,67 +457,87 @@ function handleMapClick(e) {
         renderAll();
         return;
     }
-
+    
     const clickedUnit = getUnitAt(x, y);
     let visibleMap = getVisibleMap();
 
     if (gameState.selectedUnit) {
-        if (clickedUnit && clickedUnit.owner !== gameState.turn && visibleMap[y][x]) {
-            attackUnit(gameState.selectedUnit, clickedUnit);
-        } else if (!clickedUnit || (clickedUnit && !visibleMap[y][x])) {
-            let reachable = getReachableCells(gameState.selectedUnit);
-            let canMove = reachable.some(c => c.x === x && c.y === y);
-            if (canMove) moveUnit(gameState.selectedUnit, x, y);
-            else { gameState.selectedUnit = null; gameState.state = 'IDLE'; }
-        } else if (clickedUnit.owner === gameState.turn) {
-            
-            let dist = Math.max(Math.abs(gameState.selectedUnit.x - clickedUnit.x), Math.abs(gameState.selectedUnit.y - clickedUnit.y));
-            
-            // === НОВАЯ МЕХАНИКА: ЛЕЧЕНИЕ ===
-            if (gameState.selectedUnit.type.id === 'medic' && clickedUnit.type.isInfantry && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
-                if (clickedUnit.hp < clickedUnit.type.maxHp) {
-                    if (gameState.selectedUnit.medkits > 0) {
-                        if (confirm(`Вылечить ${clickedUnit.type.name}?`)) {
-                            let heal = Math.min(gameState.selectedUnit.type.healAmount, clickedUnit.type.maxHp - clickedUnit.hp);
-                            clickedUnit.hp += heal;
-                            gameState.selectedUnit.medkits--; // Тратим аптечку
-                            gameState.selectedUnit.hasMoved = true; // Забираем ход у медика
-                            
-                            // Вызываем зеленое уведомление
-                            if(typeof showCombatNotification === 'function') {
-                                showCombatNotification(heal, clickedUnit.hp, clickedUnit.type.name, false, true);
+        // === РЕЖИМ ОСМОТРА (Выделен враг или свой походивший юнит) ===
+        if (gameState.selectedUnit.owner !== gameState.turn || gameState.selectedUnit.hasMoved) {
+            if (clickedUnit && clickedUnit.owner === gameState.turn && !clickedUnit.hasMoved) {
+                gameState.selectedUnit = clickedUnit; // Берем под контроль нового бойца
+                gameState.state = 'SELECTED';
+            } else if (clickedUnit && visibleMap[y][x]) {
+                gameState.selectedUnit = clickedUnit; // Осматриваем другого юнита
+                gameState.state = 'VIEWING';
+            } else {
+                gameState.selectedUnit = null; // Клик в пустоту сбрасывает выделение
+                gameState.state = 'IDLE';
+            }
+        } 
+        // === РЕЖИМ ДЕЙСТВИЯ (Выделен наш активный боец) ===
+        else {
+            if (clickedUnit && clickedUnit.owner !== gameState.turn && visibleMap[y][x]) {
+                attackUnit(gameState.selectedUnit, clickedUnit); // Атакуем врага
+            } else if (!clickedUnit || (clickedUnit && !visibleMap[y][x])) {
+                // Движение
+                let reachable = getReachableCells(gameState.selectedUnit);
+                let canMove = reachable.some(c => c.x === x && c.y === y);
+                if (canMove) moveUnit(gameState.selectedUnit, x, y);
+                else { gameState.selectedUnit = null; gameState.state = 'IDLE'; }
+            } else if (clickedUnit.owner === gameState.turn) {
+                
+                let dist = Math.max(Math.abs(gameState.selectedUnit.x - clickedUnit.x), Math.abs(gameState.selectedUnit.y - clickedUnit.y));
+                
+                // === МЕХАНИКА: ЛЕЧЕНИЕ ===
+                if (gameState.selectedUnit.type.id === 'medic' && clickedUnit.type.isInfantry && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
+                    if (clickedUnit.hp < clickedUnit.type.maxHp) {
+                        if (gameState.selectedUnit.medkits > 0) {
+                            if (confirm(`Вылечить ${clickedUnit.type.name}?`)) {
+                                let heal = Math.min(gameState.selectedUnit.type.healAmount, clickedUnit.type.maxHp - clickedUnit.hp);
+                                clickedUnit.hp += heal;
+                                gameState.selectedUnit.medkits--; 
+                                gameState.selectedUnit.hasMoved = true; 
+                                
+                                if(typeof showCombatNotification === 'function') {
+                                    showCombatNotification(heal, clickedUnit.hp, clickedUnit.type.name, false, true);
+                                }
+                                
+                                gameState.selectedUnit = null;
+                                gameState.state = 'IDLE';
+                                updateUI();
+                                renderAll();
                             }
-                            
-                            gameState.selectedUnit = null;
+                        } else alert("У медика закончились аптечки!");
+                    } else alert("Этот боец полностью здоров!");
+                }
+                // === МЕХАНИКА ТРАНСПОРТА ===
+                else if (gameState.selectedUnit.type.isInfantry && clickedUnit.type.transportCapacity && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
+                    if (!clickedUnit.cargo) clickedUnit.cargo = [];
+                    
+                    if (clickedUnit.cargo.length < clickedUnit.type.transportCapacity) {
+                        if (confirm(`Посадить ${gameState.selectedUnit.type.name} в ${clickedUnit.type.name}?`)) {
+                            clickedUnit.cargo.push(gameState.selectedUnit);
+                            gameState.units = gameState.units.filter(u => u !== gameState.selectedUnit); 
+                            gameState.selectedUnit = null; 
                             gameState.state = 'IDLE';
                             updateUI();
                             renderAll();
                         }
-                    } else alert("У медика закончились аптечки!");
-                } else alert("Этот боец полностью здоров!");
-            }
-            // === МЕХАНИКА ТРАНСПОРТА ===
-            else if (gameState.selectedUnit.type.isInfantry && clickedUnit.type.transportCapacity && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
-                if (!clickedUnit.cargo) clickedUnit.cargo = [];
-                
-                if (clickedUnit.cargo.length < clickedUnit.type.transportCapacity) {
-                    if (confirm(`Посадить ${gameState.selectedUnit.type.name} в ${clickedUnit.type.name}?`)) {
-                        clickedUnit.cargo.push(gameState.selectedUnit);
-                        gameState.units = gameState.units.filter(u => u !== gameState.selectedUnit); 
-                        gameState.selectedUnit = null; 
-                        gameState.state = 'IDLE';
-                        updateUI();
-                        renderAll();
-                    }
-                } else alert("В машине нет свободных мест!");
-            } else {
-                gameState.selectedUnit = clickedUnit.hasMoved ? null : clickedUnit;
+                    } else alert("В машине нет свободных мест!");
+                } else {
+                    // Клик по другому своему юниту -> берем под контроль или просто осматриваем (если ходил)
+                    gameState.selectedUnit = clickedUnit;
+                    gameState.state = clickedUnit.hasMoved ? 'VIEWING' : 'SELECTED';
+                }
             }
         }
     } else {
-        if (clickedUnit && clickedUnit.owner === gameState.turn && !clickedUnit.hasMoved) {
+        // === НИКТО НЕ ВЫБРАН ===
+        if (clickedUnit && visibleMap[y][x]) {
             gameState.selectedUnit = clickedUnit;
-            gameState.state = 'SELECTED';
+            // Если это наш боец и он не ходил - выделяем для действий. Иначе - просто смотрим.
+            gameState.state = (clickedUnit.owner === gameState.turn && !clickedUnit.hasMoved) ? 'SELECTED' : 'VIEWING';
         }
     }
     
