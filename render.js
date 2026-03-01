@@ -393,6 +393,22 @@ function renderAll() {
         }
     }
 
+        // --- ПОДСВЕТКА ЗОНЫ ВЫСАДКИ ДЕСАНТА ---
+    if (gameState.state === 'DROPPING_CARGO' && gameState.selectedUnit) {
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                let nx = gameState.selectedUnit.x + dx;
+                let ny = gameState.selectedUnit.y + dy;
+                // Рисуем зеленую зону на свободных клетках
+                if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && !getUnitAt(nx, ny)) {
+                    ctx.fillStyle = 'rgba(46, 125, 50, 0.5)'; 
+                    ctx.fillRect(nx * TILE_SIZE, ny * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+        }
+    }
+
     // --- ПОДСВЕТКА ВЫБОРА МАРШРУТА ---
     if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
         ctx.fillStyle = 'rgba(25, 118, 210, 0.2)'; 
