@@ -555,32 +555,49 @@ function isValidSpawn(x, y, playerID) {
 
 function getUnitAt(x, y) { return gameState.units.find(u => u.x === x && u.y === y); }
 
-// Функция строит маршрут по шагам, чтобы юнит не мог "перепрыгнуть" мину
+// Обновленная функция поиска пути (без ограничения дальности)
 function findPath(unit, startX, startY, endX, endY) {
-    let queue = [[{x: startX, y: startY}]];
+    let queue = [{x: startX, y: startY}];
     let visited = new Set();
     visited.add(`${startX},${startY}`);
+    let cameFrom = {};
+    let found = false;
 
     while(queue.length > 0) {
-        let path = queue.shift();
-        let curr = path[path.length - 1];
+        let curr = queue.shift();
 
-        if (curr.x === endX && curr.y === endY) return path;
+        if (curr.x === endX && curr.y === endY) {
+            found = true;
+            break;
+        }
 
-        if (path.length - 1 < unit.type.moveRange) {
-            let neighbors = [
-                {x: curr.x + 1, y: curr.y}, {x: curr.x - 1, y: curr.y},
-                {x: curr.x, y: curr.y + 1}, {x: curr.x, y: curr.y - 1}
-            ];
-            for (let n of neighbors) {
-                if (!visited.has(`${n.x},${n.y}`) && isPassable(n.x, n.y, unit)) {
-                    visited.add(`${n.x},${n.y}`);
-                    queue.push([...path, n]);
-                }
+        let neighbors = [
+            {x: curr.x + 1, y: curr.y}, {x: curr.x - 1, y: curr.y},
+            {x: curr.x, y: curr.y + 1}, {x: curr.x, y: curr.y - 1}
+        ];
+
+        for (let n of neighbors) {
+            let key = `${n.x},${n.y}`;
+            if (!visited.has(key) && isPassable(n.x, n.y, unit)) {
+                visited.add(key);
+                cameFrom[key] = curr;
+                queue.push(n);
             }
         }
     }
-    return [{x: startX, y: startY}, {x: endX, y: endY}]; 
+
+    // Если пути совсем нет (глухой тупик) - стоим на месте
+    if (!found) return [{x: startX, y: startY}]; 
+
+    // Восстанавливаем маршрут с конца в начало
+    let path = [];
+    let curr = {x: endX, y: endY};
+    while (curr.x !== startX || curr.y !== startY) {
+        path.push(curr);
+        curr = cameFrom[`${curr.x},${curr.y}`];
+    }
+    path.push({x: startX, y: startY});
+    return path.reverse(); // Переворачиваем, чтобы путь шел от Старта к Финишу
 }
 
 function moveUnit(unit, x, y) {
@@ -664,8 +681,17 @@ function endTurn() {
 
                 // Двигаемся по клеточкам и проверяем мины
                 for (let i = 1; i <= steps; i++) {
-                    finalX = path[i].x;
-                    finalY = path[i].y;
+                    let nx = path[i].x;
+                    let ny = path[i].y;
+                    
+                    // Защита от ДТП: если это последняя клетка на этот ход, 
+                    // и там УЖЕ кто-то стоит (например, союзный танк), мы тормозим на клетку раньше!
+                    if (i === steps && getUnitAt(nx, ny)) {
+                        break; 
+                    }
+
+                    finalX = nx;
+                    finalY = ny;
                     let mineIdx = gameState.mines.findIndex(m => m.x === finalX && m.y === finalY);
                     if (mineIdx !== -1) {
                         mineHit = gameState.mines[mineIdx];
@@ -674,6 +700,7 @@ function endTurn() {
                     }
                 }
 
+                // --- ВОТ ЭТОТ КУСОК ТЫ СЛУЧАЙНО ПОТЕРЯЛ В СВОЕМ ВАРИАНТЕ ---
                 u.x = finalX;
                 u.y = finalY;
                 u.hasMoved = true;
@@ -694,8 +721,8 @@ function endTurn() {
                 u.autopilotTarget = null; 
             }
         }
-    });
-
+    }); // --- КОНЕЦ КУСКА АВТОПИЛОТА ---
+                
     // --- СТАНДАРТНАЯ ЛОГИКА ЗАВЕРШЕНИЯ ХОДА ---
     capturePoints.forEach(pt => {
         const occupier = getUnitAt(pt.x, pt.y);
