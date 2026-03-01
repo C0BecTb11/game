@@ -356,11 +356,10 @@ function renderAll() {
     if (gameState.stashes) {
         gameState.stashes.forEach(s => {
             if (visibleMap[s.y][s.x]) {
-                ctx.fillStyle = '#8B4513'; // Коричневый ящик
+                ctx.fillStyle = '#8B4513';
                 ctx.fillRect(s.x * TILE_SIZE + 6, s.y * TILE_SIZE + 6, TILE_SIZE - 12, TILE_SIZE - 12);
-                ctx.fillStyle = '#D2B48C'; // Светлые полоски
+                ctx.fillStyle = '#D2B48C';
                 ctx.fillRect(s.x * TILE_SIZE + 10, s.y * TILE_SIZE + 10, TILE_SIZE - 20, TILE_SIZE - 20);
-                // Иконка
                 ctx.fillStyle = '#000';
                 ctx.font = 'bold 14px sans-serif';
                 ctx.textAlign = 'center';
@@ -376,7 +375,6 @@ function renderAll() {
             for (let dx = -1; dx <= 1; dx++) {
                 let nx = gameState.selectedUnit.x + dx;
                 let ny = gameState.selectedUnit.y + dy;
-                // Зона выгрузки - зеленая
                 if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && isPassable(nx, ny, gameState.selectedUnit) && !getUnitAt(nx, ny)) {
                     ctx.fillStyle = 'rgba(46, 125, 50, 0.5)'; 
                     ctx.fillRect(nx * TILE_SIZE, ny * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -388,11 +386,11 @@ function renderAll() {
     // --- ПОДСВЕТКА ВЫБОРА МАРШРУТА ---
     if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
         ctx.fillStyle = 'rgba(25, 118, 210, 0.2)'; 
-        ctx.fillRect(0, 0, GRID_SIZE * TILE_SIZE, GRID_SIZE * TILE_SIZE); // Слегка синим всю карту
+        ctx.fillRect(0, 0, GRID_SIZE * TILE_SIZE, GRID_SIZE * TILE_SIZE); 
     }
 
-    // --- ОТРИСОВКА ЛИНИИ АВТОПИЛОТА ---
-    if (gameState.selectedUnit && gameState.selectedUnit.autopilotTarget) {
+    // --- ОТРИСОВКА ЛИНИИ АВТОПИЛОТА (ИСКЛЮЧИТЕЛЬНО ДЛЯ СВОИХ ЮНИТОВ) ---
+    if (gameState.selectedUnit && gameState.selectedUnit.autopilotTarget && gameState.selectedUnit.owner === viewPlayer) {
         ctx.beginPath();
         ctx.moveTo(gameState.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2);
         ctx.lineTo(gameState.selectedUnit.autopilotTarget.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.autopilotTarget.y * TILE_SIZE + TILE_SIZE / 2);
@@ -402,24 +400,28 @@ function renderAll() {
         ctx.stroke();
         ctx.setLineDash([]);
         
-        // Рисуем крестик в точке назначения
         ctx.fillStyle = '#ffaa00';
         ctx.fillRect(gameState.selectedUnit.autopilotTarget.x * TILE_SIZE + TILE_SIZE/2 - 6, gameState.selectedUnit.autopilotTarget.y * TILE_SIZE + TILE_SIZE/2 - 6, 12, 12);
     }
     
+    // --- ПОДСВЕТКА ЗОН ХОДА И АТАКИ ---
     if (gameState.selectedUnit && !gameState.selectedUnit.hasMoved && gameState.state !== 'PLACING_MINE' && gameState.state !== 'SETTING_ROUTE') {
         let reachable = getReachableCells(gameState.selectedUnit);
+        
+        // Зона хода (синяя) - рисуем для всех, чтобы игрок мог просчитать радиус врага
         ctx.fillStyle = 'rgba(0, 200, 255, 0.3)';
         reachable.forEach(cell => {
             ctx.fillRect(cell.x * TILE_SIZE, cell.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         });
 
+        // Красные клетки (Кто в радиусе поражения выделенного юнита)
         for (let ty = 0; ty < GRID_SIZE; ty++) {
             for (let tx = 0; tx < GRID_SIZE; tx++) {
                 let dist = Math.abs(gameState.selectedUnit.x - tx) + Math.abs(gameState.selectedUnit.y - ty);
                 let unitOnTile = getUnitAt(tx, ty);
                 
-                if (dist <= gameState.selectedUnit.type.attackRange && unitOnTile && unitOnTile.owner !== gameState.turn && visibleMap[ty][tx]) {
+                // ИСПРАВЛЕНИЕ: Цель должна быть врагом ВЫДЕЛЕННОГО юнита (а не игрока, чей сейчас ход)
+                if (dist <= gameState.selectedUnit.type.attackRange && unitOnTile && unitOnTile.owner !== gameState.selectedUnit.owner && visibleMap[ty][tx]) {
                     if (checkLineOfSight(gameState.selectedUnit.x, gameState.selectedUnit.y, tx, ty, gameState.selectedUnit)) {
                         ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
                         ctx.fillRect(tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -428,7 +430,8 @@ function renderAll() {
             }
         }
 
-        if (gameState.selectedUnit.type.id === 'medic' && gameState.selectedUnit.medkits > 0) {
+        // Подсветка лечения медика (только если медик НАШ)
+        if (gameState.selectedUnit.type.id === 'medic' && gameState.selectedUnit.medkits > 0 && gameState.selectedUnit.owner === viewPlayer) {
             gameState.units.forEach(u => {
                 if (u.owner === gameState.turn && u.type.isInfantry && u.hp < u.type.maxHp && u !== gameState.selectedUnit) {
                     let dist = Math.max(Math.abs(gameState.selectedUnit.x - u.x), Math.abs(gameState.selectedUnit.y - u.y));
@@ -449,28 +452,25 @@ function renderAll() {
         ctx.strokeRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         ctx.lineWidth = 1;
 
-        if (gameState.selectedUnit.owner === viewPlayer) {
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]); 
-            
-            gameState.units.forEach(enemy => {
-                if (enemy.owner !== viewPlayer && visibleMap[enemy.y][enemy.x]) {
-                    let dist = Math.abs(enemy.x - gameState.selectedUnit.x) + Math.abs(enemy.y - gameState.selectedUnit.y);
-                    if (dist <= enemy.type.attackRange && checkLineOfSight(enemy.x, enemy.y, gameState.selectedUnit.x, gameState.selectedUnit.y, enemy)) {
-                        ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
-                        ctx.fillRect(enemy.x * TILE_SIZE, enemy.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-                        ctx.beginPath();
-                        ctx.moveTo(enemy.x * TILE_SIZE + TILE_SIZE / 2, enemy.y * TILE_SIZE + TILE_SIZE / 2);
-                        ctx.lineTo(gameState.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2);
-                        ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)';
-                        ctx.stroke();
-                    }
+        // --- ЛАЗЕРНЫЕ ПРИЦЕЛЫ (Теперь работают и для врагов, целящихся в тебя) ---
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]); 
+        
+        gameState.units.forEach(targetUnit => {
+            // Цель должна быть врагом ВЫДЕЛЕННОГО юнита
+            if (targetUnit.owner !== gameState.selectedUnit.owner && visibleMap[targetUnit.y][targetUnit.x]) {
+                let dist = Math.abs(targetUnit.x - gameState.selectedUnit.x) + Math.abs(targetUnit.y - gameState.selectedUnit.y);
+                if (dist <= gameState.selectedUnit.type.attackRange && checkLineOfSight(targetUnit.x, targetUnit.y, gameState.selectedUnit.x, gameState.selectedUnit.y, gameState.selectedUnit)) {
+                    ctx.beginPath();
+                    ctx.moveTo(targetUnit.x * TILE_SIZE + TILE_SIZE / 2, targetUnit.y * TILE_SIZE + TILE_SIZE / 2);
+                    ctx.lineTo(gameState.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2);
+                    ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)';
+                    ctx.stroke();
                 }
-            });
-            ctx.setLineDash([]); 
-            ctx.lineWidth = 1;
-        }
+            }
+        });
+        ctx.setLineDash([]); 
+        ctx.lineWidth = 1;
     }
 
     gameState.units.forEach(u => {
