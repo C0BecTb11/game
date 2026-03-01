@@ -421,6 +421,39 @@ function handleMapClick(e) {
         return;
     }
 
+        // === ЛОГИКА ВЫСАДКИ ДЕСАНТА НА КАРТУ ===
+    if (gameState.state === 'DROPPING_CARGO' && gameState.selectedUnit) {
+        let transport = gameState.selectedUnit;
+        let index = gameState.dropIndex;
+        let unitToDrop = transport.cargo[index];
+
+        if (!unitToDrop) {
+            gameState.state = 'IDLE';
+            return;
+        }
+
+        let dist = Math.max(Math.abs(transport.x - x), Math.abs(transport.y - y));
+        
+        if (dist <= 1 && dist > 0 && isPassable(x, y, unitToDrop) && !getUnitAt(x, y)) {
+            unitToDrop.x = x;
+            unitToDrop.y = y;
+            unitToDrop.hasMoved = true; // Сразу теряет ход после высадки
+            
+            transport.cargo.splice(index, 1);
+            gameState.units.push(unitToDrop);
+            
+            gameState.state = 'IDLE';
+            updateUI();
+            renderAll();
+        } else {
+            alert("Недопустимая клетка! Выберите свободную клетку рядом с машиной.");
+            gameState.state = 'IDLE';
+            updateUI();
+            renderAll();
+        }
+        return;
+    }
+
         // === ЛОГИКА АВТОПИЛОТА (ЗАДАЕМ ЦЕЛЬ) ===
     if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
         if (isPassable(x, y, gameState.selectedUnit) || getUnitAt(x, y)) {
@@ -487,45 +520,73 @@ function handleMapClick(e) {
                 else { gameState.selectedUnit = null; gameState.state = 'IDLE'; }
             } else if (clickedUnit.owner === gameState.turn) {
                 
-                let dist = Math.max(Math.abs(gameState.selectedUnit.x - clickedUnit.x), Math.abs(gameState.selectedUnit.y - clickedUnit.y));
-                
-                // === МЕХАНИКА: ЛЕЧЕНИЕ ===
-                if (gameState.selectedUnit.type.id === 'medic' && clickedUnit.type.isInfantry && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
-                    if (clickedUnit.hp < clickedUnit.type.maxHp) {
-                        if (gameState.selectedUnit.medkits > 0) {
-                            if (confirm(`Вылечить ${clickedUnit.type.name}?`)) {
-                                let heal = Math.min(gameState.selectedUnit.type.healAmount, clickedUnit.type.maxHp - clickedUnit.hp);
-                                clickedUnit.hp += heal;
-                                gameState.selectedUnit.medkits--; 
-                                gameState.selectedUnit.hasMoved = true; 
-                                
-                                if(typeof showCombatNotification === 'function') {
-                                    showCombatNotification(heal, clickedUnit.hp, clickedUnit.type.name, false, true);
-                                }
-                                
-                                gameState.selectedUnit = null;
-                                gameState.state = 'IDLE';
-                                updateUI();
-                                renderAll();
+            let dist = Math.max(Math.abs(gameState.selectedUnit.x - clickedUnit.x), Math.abs(gameState.selectedUnit.y - clickedUnit.y));
+            
+            // Рассчитываем реальный путь к транспорту для посадки издалека
+            let pathToTransport = findPath(gameState.selectedUnit, gameState.selectedUnit.x, gameState.selectedUnit.y, clickedUnit.x, clickedUnit.y);
+            let canReachTransport = (pathToTransport.length - 1 <= gameState.selectedUnit.type.moveRange);
+
+            // === МЕХАНИКА: ЛЕЧЕНИЕ ===
+            if (gameState.selectedUnit.type.id === 'medic' && clickedUnit.type.isInfantry && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
+                if (clickedUnit.hp < clickedUnit.type.maxHp) {
+                    if (gameState.selectedUnit.medkits > 0) {
+                        if (confirm(`Вылечить ${clickedUnit.type.name}?`)) {
+                            let heal = Math.min(gameState.selectedUnit.type.healAmount, clickedUnit.type.maxHp - clickedUnit.hp);
+                            clickedUnit.hp += heal;
+                            gameState.selectedUnit.medkits--; 
+                            gameState.selectedUnit.hasMoved = true; 
+                            
+                            if(typeof showCombatNotification === 'function') {
+                                showCombatNotification(heal, clickedUnit.hp, clickedUnit.type.name, false, true);
                             }
-                        } else alert("У медика закончились аптечки!");
-                    } else alert("Этот боец полностью здоров!");
-                }
-                // === МЕХАНИКА ТРАНСПОРТА ===
-                else if (gameState.selectedUnit.type.isInfantry && clickedUnit.type.transportCapacity && dist <= 1 && gameState.selectedUnit !== clickedUnit) {
-                    if (!clickedUnit.cargo) clickedUnit.cargo = [];
-                    
-                    if (clickedUnit.cargo.length < clickedUnit.type.transportCapacity) {
-                        if (confirm(`Посадить ${gameState.selectedUnit.type.name} в ${clickedUnit.type.name}?`)) {
-                            clickedUnit.cargo.push(gameState.selectedUnit);
-                            gameState.units = gameState.units.filter(u => u !== gameState.selectedUnit); 
-                            gameState.selectedUnit = null; 
+                            
+                            gameState.selectedUnit = null;
                             gameState.state = 'IDLE';
                             updateUI();
                             renderAll();
                         }
-                    } else alert("В машине нет свободных мест!");
-                } else {
+                    } else alert("У медика закончились аптечки!");
+                } else alert("Этот боец полностью здоров!");
+            }
+            // === МЕХАНИКА ТРАНСПОРТА (ОБНОВЛЕННАЯ) ===
+            else if (gameState.selectedUnit.type.isInfantry && clickedUnit.type.transportCapacity && canReachTransport && gameState.selectedUnit !== clickedUnit) {
+                if (!clickedUnit.cargo) clickedUnit.cargo = [];
+                
+                if (clickedUnit.cargo.length < clickedUnit.type.transportCapacity) {
+                    if (confirm(`Посадить ${gameState.selectedUnit.type.name} в ${clickedUnit.type.name}?`)) {
+                        
+                        // Честная механика: проверяем мины по пути бега к машине!
+                        let mineHit = null;
+                        for (let i = 1; i < pathToTransport.length; i++) {
+                            let nx = pathToTransport[i].x;
+                            let ny = pathToTransport[i].y;
+                            let mineIdx = gameState.mines.findIndex(m => m.x === nx && m.y === ny);
+                            if (mineIdx !== -1) {
+                                mineHit = gameState.mines[mineIdx];
+                                gameState.mines.splice(mineIdx, 1);
+                                break; 
+                            }
+                        }
+
+                        if (mineHit) {
+                            gameState.selectedUnit.hp -= mineHit.damage;
+                            if(typeof showCombatNotification === 'function') showCombatNotification(mineHit.damage, gameState.selectedUnit.hp, gameState.selectedUnit.type.name, false);
+                            alert("💥 БАБАХ! Юнит подорвался на мине, пока бежал к транспорту!");
+                        }
+
+                        // Если выжил после пробежки - садится в кузов
+                        if (gameState.selectedUnit.hp > 0) {
+                            clickedUnit.cargo.push(gameState.selectedUnit);
+                        }
+                        
+                        gameState.units = gameState.units.filter(u => u !== gameState.selectedUnit); 
+                        gameState.selectedUnit = null; 
+                        gameState.state = 'IDLE';
+                        updateUI();
+                        renderAll();
+                    }
+                } else alert("В машине нет свободных мест!");
+            } else {
                     // Клик по другому своему юниту -> берем под контроль или просто осматриваем (если ходил)
                     gameState.selectedUnit = clickedUnit;
                     gameState.state = clickedUnit.hasMoved ? 'VIEWING' : 'SELECTED';
@@ -762,37 +823,9 @@ window.dropCargo = function(index) {
     let transport = gameState.selectedUnit;
     if (!transport || !transport.cargo || !transport.cargo[index]) return;
 
-    let unitToDrop = transport.cargo[index];
-    let freeTiles = [];
-    
-    // Ищем свободные клетки вокруг транспорта (по диагонали и прямым)
-    for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            let nx = transport.x + dx;
-            let ny = transport.y + dy;
-            
-            // Если клетка проходима и на ней НИКТО не стоит
-            if (isPassable(nx, ny, unitToDrop) && !getUnitAt(nx, ny)) {
-                freeTiles.push({x: nx, y: ny});
-            }
-        }
-    }
-
-    if (freeTiles.length === 0) {
-        alert("Вокруг нет места для высадки!");
-        return;
-    }
-
-    // Высаживаем на первую попавшуюся свободную клетку
-    let dropTile = freeTiles[0]; 
-    unitToDrop.x = dropTile.x;
-    unitToDrop.y = dropTile.y;
-    unitToDrop.hasMoved = true; // Высаженный боец сразу теряет ход, это баланс
-    
-    transport.cargo.splice(index, 1);
-    gameState.units.push(unitToDrop);
-    
+    // Переводим игру в режим выбора клетки
+    gameState.state = 'DROPPING_CARGO';
+    gameState.dropIndex = index;
     updateUI();
     renderAll();
 };
