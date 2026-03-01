@@ -98,11 +98,9 @@ function updateUI() {
 
                     if (needsRes) {
                         let hasSource = false;
-                        // Проверяем наличие Склада рядом
                         if (gameState.stashes) {
                             hasSource = gameState.stashes.some(s => Math.max(Math.abs(s.x - u.x), Math.abs(s.y - u.y)) <= 1 && s.res[resType] > 0);
                         }
-                        // Проверяем наличие Грузовика рядом
                         if (!hasSource) {
                             hasSource = gameState.units.some(truck => 
                                 truck.owner === window.myPlayerId && 
@@ -197,7 +195,8 @@ function updateUI() {
                     } else {
                         baseControls.classList.add('hidden');
                     }
-                                        // Управление Складом
+                    
+                    // Управление Складом
                     const btnCreateStash = document.getElementById('btn-create-stash');
                     const stashControls = document.getElementById('sup-stash-controls');
                     
@@ -214,7 +213,7 @@ function updateUI() {
                         document.getElementById('stash-mat').innerText = adjStash.res.materials;
                     } else {
                         stashControls.classList.add('hidden');
-                        if (!isAtBase) { // Разрешаем строить склад только вне базы
+                        if (!isAtBase) { 
                             btnCreateStash.classList.remove('hidden');
                             if (gameState.state === 'PLACING_STASH') {
                                 btnCreateStash.innerText = "ОТМЕНА";
@@ -227,36 +226,45 @@ function updateUI() {
                             btnCreateStash.classList.add('hidden');
                         }
                     }
-                                        // Управление автопилотом
-                    const btnSetRoute = document.getElementById('btn-set-route');
-                    const btnCancelRoute = document.getElementById('btn-cancel-route');
-                    if (btnSetRoute && btnCancelRoute) {
-                        if (u.autopilotTarget) {
-                            btnSetRoute.classList.add('hidden');
-                            btnCancelRoute.classList.remove('hidden');
+                } else {
+                    supplyContainer.classList.add('hidden');
+                }
+            }
+
+            // --- УНИВЕРСАЛЬНЫЙ АВТОПИЛОТ ДЛЯ ВСЕХ ЮНИТОВ ---
+            const autoControls = document.getElementById('sup-auto-controls');
+            const btnSetRoute = document.getElementById('btn-set-route');
+            const btnCancelRoute = document.getElementById('btn-cancel-route');
+
+            if (autoControls && btnSetRoute && btnCancelRoute) {
+                // Показываем кнопку автопилота только для СВОИХ юнитов
+                if (u.owner === window.myPlayerId) {
+                    autoControls.classList.remove('hidden');
+                    if (u.autopilotTarget) {
+                        btnSetRoute.classList.add('hidden');
+                        btnCancelRoute.classList.remove('hidden');
+                    } else {
+                        btnCancelRoute.classList.add('hidden');
+                        btnSetRoute.classList.remove('hidden');
+                        if (gameState.state === 'SETTING_ROUTE') {
+                            btnSetRoute.innerText = "ОТМЕНА";
+                            btnSetRoute.style.background = "#aaa";
                         } else {
-                            btnCancelRoute.classList.add('hidden');
-                            btnSetRoute.classList.remove('hidden');
-                            if (gameState.state === 'SETTING_ROUTE') {
-                                btnSetRoute.innerText = "ОТМЕНА";
-                                btnSetRoute.style.background = "#aaa";
-                            } else {
-                                btnSetRoute.innerText = "📍 Указать цель";
-                                btnSetRoute.style.background = "#1976d2";
-                            }
+                            btnSetRoute.innerText = "📍 Указать цель маршрута";
+                            btnSetRoute.style.background = "#1976d2";
                         }
                     }
                 } else {
-                    supplyContainer.classList.add('hidden');
+                    autoControls.classList.add('hidden');
                 }
             }
 
             panel.classList.remove('hidden');
         } else {
             panel.classList.add('hidden');
-        }
+     }
     }
-}
+  }
 
 function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = false) {
     const notif = document.getElementById('combat-notification');
@@ -274,19 +282,7 @@ function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = 
         } else {
             dmgElem.innerText = dmg;
             dmgElem.style.color = '#fff';
-        }
-        
-        if (remainingHp <= 0) {
-            document.getElementById('notif-hp').innerText = `Уничтожен (${targetName})`;
-            notif.style.borderColor = '#ff4444'; 
-        } else {
-            document.getElementById('notif-hp').innerText = `Осталось ХП: ${remainingHp}`;
-            notif.style.borderColor = '#ffaa00'; 
-        }
-    }
-
-    notif.classList.remove('hidden');
-    clearTimeout(combatNotifTimeout);
+ );
     combatNotifTimeout = setTimeout(() => {
         notif.classList.add('hidden');
     }, 2500); 
