@@ -150,22 +150,34 @@ function generateOrganicMainMap() {
         }
     }
 
-    // 5. Разбросанные постройки (Укрытия)
-    let buildingsToPlace = 80; 
+    // 5. Жилые кварталы (Заменяем хаотичные блоки 1x1 на аккуратные здания 2x2 и 3x2)
+    let blocksToPlace = 25; // 25 пар = 50 городских кварталов
     attempts = 0;
-    while (buildingsToPlace > 0 && attempts < 600) {
+    while (blocksToPlace > 0 && attempts < 400) {
         attempts++;
-        let rx = Math.floor(Math.random() * (GRID_SIZE / 2));
-        let ry = Math.floor(Math.random() * GRID_SIZE);
+        let w = 2 + Math.floor(Math.random() * 2); // Ширина 2 или 3
+        let h = 2 + Math.floor(Math.random() * 2); // Высота 2 или 3
+        
+        let rx = Math.floor(Math.random() * (GRID_SIZE / 2 - w));
+        let ry = Math.floor(Math.random() * (GRID_SIZE - h));
 
-        if (isAreaFree(rx, ry, 1, 1)) { 
-            gameMap[ry][rx].type = TILES.BUILDING;
+        if (isAreaFree(rx, ry, w, h)) { 
+            // Рисуем левый квартал
+            for(let dy = 0; dy < h; dy++) {
+                for(let dx = 0; dx < w; dx++) {
+                    gameMap[ry + dy][rx + dx].type = TILES.BUILDING;
+                }
+            }
             
-            let mirrorX = GRID_SIZE - rx - 1;
-            let mirrorY = GRID_SIZE - ry - 1;
-            gameMap[mirrorY][mirrorX].type = TILES.BUILDING;
-            
-            buildingsToPlace--;
+            // Рисуем симметричный правый квартал
+            let mirrorX = GRID_SIZE - rx - w;
+            let mirrorY = GRID_SIZE - ry - h;
+            for(let dy = 0; dy < h; dy++) {
+                for(let dx = 0; dx < w; dx++) {
+                    gameMap[mirrorY + dy][mirrorX + dx].type = TILES.BUILDING;
+                }
+            }
+            blocksToPlace--;
         }
     }
 
