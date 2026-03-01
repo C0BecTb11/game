@@ -262,9 +262,9 @@ function updateUI() {
             panel.classList.remove('hidden');
         } else {
             panel.classList.add('hidden');
-     }
+        }
     }
-  }
+}
 
 function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = false) {
     const notif = document.getElementById('combat-notification');
@@ -282,7 +282,19 @@ function showCombatNotification(dmg, remainingHp, targetName, inCover, isHeal = 
         } else {
             dmgElem.innerText = dmg;
             dmgElem.style.color = '#fff';
- );
+        }
+        
+        if (remainingHp <= 0) {
+            document.getElementById('notif-hp').innerText = `Уничтожен (${targetName})`;
+            notif.style.borderColor = '#ff4444'; 
+        } else {
+            document.getElementById('notif-hp').innerText = `Осталось ХП: ${remainingHp}`;
+            notif.style.borderColor = '#ffaa00'; 
+        }
+    }
+
+    notif.classList.remove('hidden');
+    clearTimeout(combatNotifTimeout);
     combatNotifTimeout = setTimeout(() => {
         notif.classList.add('hidden');
     }, 2500); 
@@ -337,7 +349,7 @@ function renderAll() {
         }
     }
 
-        // --- ОТРИСОВКА СКЛАДОВ ---
+    // --- ОТРИСОВКА СКЛАДОВ ---
     if (gameState.stashes) {
         gameState.stashes.forEach(s => {
             if (visibleMap[s.y][s.x]) {
@@ -370,7 +382,7 @@ function renderAll() {
         }
     }
 
-        // --- ПОДСВЕТКА ВЫБОРА МАРШРУТА ---
+    // --- ПОДСВЕТКА ВЫБОРА МАРШРУТА ---
     if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
         ctx.fillStyle = 'rgba(25, 118, 210, 0.2)'; 
         ctx.fillRect(0, 0, GRID_SIZE * TILE_SIZE, GRID_SIZE * TILE_SIZE); // Слегка синим всю карту
@@ -392,7 +404,7 @@ function renderAll() {
         ctx.fillRect(gameState.selectedUnit.autopilotTarget.x * TILE_SIZE + TILE_SIZE/2 - 6, gameState.selectedUnit.autopilotTarget.y * TILE_SIZE + TILE_SIZE/2 - 6, 12, 12);
     }
     
-    if (gameState.selectedUnit && !gameState.selectedUnit.hasMoved && gameState.state !== 'PLACING_MINE') {
+    if (gameState.selectedUnit && !gameState.selectedUnit.hasMoved && gameState.state !== 'PLACING_MINE' && gameState.state !== 'SETTING_ROUTE') {
         let reachable = getReachableCells(gameState.selectedUnit);
         ctx.fillStyle = 'rgba(0, 200, 255, 0.3)';
         reachable.forEach(cell => {
