@@ -2,9 +2,19 @@
 // Этот файл отвечает ТОЛЬКО за отрисовку графики и обновление интерфейса (UI)
 
 function updateUI() {
-    document.getElementById('p1-points').innerText = gameState.players[1].points;
-    document.getElementById('p2-points').innerText = gameState.players[2].points;
-    
+    // --- ТУМАН ВОЙНЫ ДЛЯ ЭКОНОМИКИ ---
+    if (window.myPlayerId === 1) {
+        document.getElementById('p1-points').innerText = gameState.players[1].points;
+        document.getElementById('p2-points').innerText = "???";
+    } else if (window.myPlayerId === 2) {
+        document.getElementById('p1-points').innerText = "???";
+        document.getElementById('p2-points').innerText = gameState.players[2].points;
+    } else {
+        // На случай, если кто-то смотрит игру как зритель
+        document.getElementById('p1-points').innerText = gameState.players[1].points;
+        document.getElementById('p2-points').innerText = gameState.players[2].points;
+    }
+
     const p1NameElem = document.getElementById('p1-name');
     const p2NameElem = document.getElementById('p2-name');
     if (p1NameElem && gameState.players[1].name) p1NameElem.innerText = gameState.players[1].name;
