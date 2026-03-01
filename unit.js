@@ -36,12 +36,12 @@ const UNIT_TYPES = {
     },
     TRANSPORT: { 
         id: 'transport', name: "Транспортник", imgSrc: "./images/team-r-peh.png", 
-        cost: 60, maxHp: 8, attack: 0, attackRange: 0, moveRange: 7, visionRange: 5, canCapture: false, 
+        cost: 60, maxHp: 8, attack: 0, attackRange: 0, moveRange: 7, visionRange: 4, canCapture: false, 
         isArmor: true, transportCapacity: 2 
     },
     SUPPLY: { 
         id: 'supply', name: "Снабжение", imgSrc: "./images/team-r-supply.png", 
-        cost: 80, maxHp: 8, attack: 0, attackRange: 0, moveRange: 3, visionRange: 4, canCapture: false,
+        cost: 80, maxHp: 8, attack: 0, attackRange: 0, moveRange: 7, visionRange: 4, canCapture: false,
         maxCargo: 10 
     },
     BTR: { 
