@@ -699,27 +699,66 @@ function moveUnit(unit, x, y) {
 }
 
 function attackUnit(attacker, target) {
-    const dist = Math.abs(attacker.x - target.x) + Math.abs(attacker.y - target.y);
-    if (dist <= attacker.type.attackRange) {
-        // Передаем attacker, чтобы система знала, кто именно пытается выстрелить
-        if (!checkLineOfSight(attacker.x, attacker.y, target.x, target.y, attacker)) {
-            alert("Нет линии видимости!");
-            return;
+    let dist = Math.abs(attacker.x - target.x) + Math.abs(attacker.y - target.y);
+    
+    if (dist > attacker.type.attackRange) {
+        alert("Цель слишком далеко!");
+        return;
+    }
+    
+    if (!checkLineOfSight(attacker.x, attacker.y, target.x, target.y, attacker)) {
+        alert("Цель вне зоны видимости!");
+        return;
+    }
+
+    // 1. Базовый урон
+    let damage = attacker.type.attack;
+
+    // === 2. МЕХАНИКА БРОНИ ===
+    if (target.type.isArmor) {
+        if (attacker.type.bonusArmorDamage) {
+            // Гранатометы и противотанковые орудия наносят огромный урон
+            damage = attacker.type.attack + attacker.type.bonusArmorDamage;
+        } else if (attacker.type.isInfantry) {
+            // Обычное стрелковое оружие (снайперы, пулеметы, пехота) только "царапает" краску
+            damage = 1;
         }
-        let finalDamage = attacker.type.attack;
-        if (attacker.type.bonusArmorDamage && target.type.isArmor) finalDamage += attacker.type.bonusArmorDamage;
-        target.hp -= finalDamage;
-        
-        // Эта функция теперь лежит в render.js
-        if(typeof showCombatNotification === 'function') {
-            showCombatNotification(finalDamage, target.hp, target.type.name, false);
+    }
+
+    // 3. Механика укрытия (если цель в здании или на заводе)
+    let targetTile = gameMap[target.y][target.x].type;
+    let inCover = false;
+    
+    // Броня слишком большая, чтобы прятаться в зданиях, поэтому укрытие работает только для пехоты
+    if ((targetTile === TILES.BUILDING || targetTile === TILES.FACTORY) && !target.type.isArmor) {
+        damage = Math.max(1, damage - 2); // Укрытие поглощает 2 урона (но минимум 1 урон проходит)
+        inCover = true;
+    }
+
+    // 4. Наносим урон
+    target.hp -= damage;
+    attacker.hasMoved = true;
+
+    // Выводим красивое уведомление (цифра урона над головой)
+    if (typeof showCombatNotification === 'function') {
+        showCombatNotification(damage, target.hp, target.type.name, inCover);
+    }
+
+    // 5. Проверка на уничтожение
+    if (target.hp <= 0) {
+        // Если уничтожили транспорт, в котором сидел десант — десант погибает вместе с машиной!
+        if (target.cargo && target.cargo.length > 0) {
+            alert(`💥 Вражеский ${target.type.name} уничтожен! Погиб экипаж и десант: ${target.cargo.length} чел.`);
         }
         
-        attacker.hasMoved = true;
-        gameState.selectedUnit = null; 
-        gameState.state = 'IDLE';
-        if (target.hp <= 0) gameState.units = gameState.units.filter(u => u !== target);
-    } else alert("Цель вне зоны досягаемости!");
+        // Убираем убитого юнита с карты
+        gameState.units = gameState.units.filter(u => u !== target);
+    }
+
+    gameState.selectedUnit = null;
+    gameState.state = 'IDLE';
+    updateUI();
+    renderAll();
 }
 
 function endTurn() {
