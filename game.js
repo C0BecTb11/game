@@ -317,14 +317,24 @@ function getVisibleMap() {
 
 function isPassable(x, y, unit) {
     if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return false;
-    let tileType = gameMap[y][x].type;
-    if (tileType === TILES.WATER) return false;
+    let tile = gameMap[y][x].type;
+    
+    // 1. Авиация летает вообще над ВСЕМ (водой, лесом, зданиями)
+    if (unit && unit.type.isAir) return true; 
 
-    let isVehicle = unit.type.isArmor || unit.type.id === 'supply';
-    if (isVehicle && (tileType === TILES.BUILDING || tileType === TILES.FACTORY)) return false;
+    // 2. Вода блокирует ВСЕ наземные войска
+    if (tile === TILES.WATER) return false;
 
-    let occupier = getUnitAt(x, y);
-    if (occupier && occupier.owner !== unit.owner) return false;
+    // 3. Здания и Заводы: техника не проедет, а пехота спокойно заходит в укрытие
+    if (tile === TILES.BUILDING || tile === TILES.FACTORY) {
+        if (unit && unit.type.isInfantry) {
+            return true; // Пехота проходит
+        } else {
+            return false; // Танки, БТР и РСЗО не пролезают в двери
+        }
+    }
+
+    // 4. По дорогам и лесу ходят все
     return true;
 }
 
