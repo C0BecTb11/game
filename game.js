@@ -128,6 +128,16 @@ function initControls() {
     document.getElementById('buy-sniper').onclick = () => prepareBuy('SNIPER');
     document.getElementById('buy-specnaz').onclick = () => prepareBuy('SPECNAZ');
     document.getElementById('buy-transport').onclick = () => prepareBuy('TRANSPORT');
+
+        // Новые юниты ПВО и Артиллерии
+    document.getElementById('buy-pzrk').onclick = () => buyUnit('pzrk');
+    document.getElementById('buy-mortar').onclick = () => buyUnit('mortar');
+    document.getElementById('buy-rszo').onclick = () => buyUnit('rszo');
+    
+    // Авиация
+    document.getElementById('buy-mi8').onclick = () => buyUnit('mi8');
+    document.getElementById('buy-ka52').onclick = () => buyUnit('ka52');
+    document.getElementById('buy-su25').onclick = () => buyUnit('su25');
     
     document.getElementById('end-turn').onclick = endTurn;
 
@@ -454,6 +464,55 @@ function handleMapClick(e) {
         return;
     }
 
+        // === ЛОГИКА АРТИЛЛЕРИЙСКОГО ЗАЛПА (РСЗО и МИНОМЕТ) ===
+    if (gameState.state === 'ARTILLERY_AIMING' && gameState.selectedUnit) {
+        let u = gameState.selectedUnit;
+        let dist = Math.abs(u.x - x) + Math.abs(u.y - y);
+        
+        if (dist > u.type.attackRange) {
+            alert("Точка прицеливания слишком далеко!");
+            return;
+        }
+
+        let area = u.type.artArea; // 4 для РСЗО, 2 для миномета
+        let shots = u.type.artShots; // 3 ракеты у РСЗО, 1 мина у миномета
+        
+        // Левый верхний угол зоны поражения
+        let startX = x - Math.floor(area / 2);
+        let startY = y - Math.floor(area / 2);
+
+        let hitLog = [];
+        // Рандомно раскидываем снаряды по квадрату!
+        for(let i = 0; i < shots; i++) {
+            let rx = startX + Math.floor(Math.random() * area);
+            let ry = startY + Math.floor(Math.random() * area);
+            
+            if (rx >= 0 && rx < GRID_SIZE && ry >= 0 && ry < GRID_SIZE) {
+                let target = getUnitAt(rx, ry);
+                if (target) {
+                    let dmg = u.type.attack;
+                    target.hp -= dmg;
+                    hitLog.push(`💥 ${target.type.name} получил ${dmg} урона!`);
+                    
+                    if (target.hp <= 0) {
+                        gameState.units = gameState.units.filter(unit => unit !== target);
+                        hitLog.push(`💀 ${target.type.name} УНИЧТОЖЕН!`);
+                    }
+                }
+            }
+        }
+
+        if (hitLog.length > 0) alert("РАПОРТ ОБ УДАРЕ:\n" + hitLog.join('\n'));
+        else alert("Снаряды легли мимо целей. Только землю вспахали.");
+
+        u.cooldown = u.type.maxCooldown; // Устанавливаем таймер перезарядки
+        u.hasMoved = true;
+        gameState.state = 'IDLE';
+        updateUI();
+        renderAll();
+        return;
+    }
+    
         // === ЛОГИКА АВТОПИЛОТА (ЗАДАЕМ ЦЕЛЬ) ===
     if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
         if (isPassable(x, y, gameState.selectedUnit) || getUnitAt(x, y)) {
@@ -711,6 +770,16 @@ function attackUnit(attacker, target) {
         return;
     }
 
+        // === ПРАВИЛА ПВО ===
+    if (attacker.type.isAntiAir && !target.type.isAir) {
+        alert("Солдат с ПЗРК может стрелять ТОЛЬКО по воздушным целям!");
+        return;
+    }
+    if (target.type.isAir && !attacker.type.isAntiAir && !attacker.type.isAir && !attacker.type.isInfantry) {
+        alert("Из этого орудия невозможно попасть по летящей цели! Нужна Пехота, ПЗРК или Авиация.");
+        return;
+    }
+
     // 1. Базовый урон
     let damage = attacker.type.attack;
 
@@ -838,7 +907,13 @@ function endTurn() {
     gameState.state = 'IDLE';
     gameState.unitToPlace = null;
     
-    gameState.units.forEach(u => { if (u.owner === window.myPlayerId) u.hasMoved = false; });
+    gameState.units.forEach(u => { 
+        if (u.owner === window.myPlayerId) {
+            u.hasMoved = false; 
+            // Кулдаун артиллерии уменьшается каждый наш ход
+            if (u.cooldown > 0) u.cooldown--; 
+        }
+    });
     
     const notif = document.getElementById('combat-notification');
     if(notif) notif.classList.add('hidden');
@@ -1026,6 +1101,16 @@ window.resupplyUnit = function() {
     
     alert(`Запасы успешно пополнены: +${taken} шт.`);
     
+    updateUI();
+    renderAll();
+};
+
+window.startArtilleryTargeting = function() {
+    if (gameState.state === 'ARTILLERY_AIMING') {
+        gameState.state = 'SELECTED';
+    } else {
+        gameState.state = 'ARTILLERY_AIMING';
+    }
     updateUI();
     renderAll();
 };
