@@ -474,7 +474,7 @@ function handleMapClick(e) {
         return;
     }
 
-        // === ЛОГИКА АРТИЛЛЕРИЙСКОГО ЗАЛПА (РСЗО и МИНОМЕТ) ===
+        // === ЛОГИКА АРТИЛЛЕРИЙСКОГО ЗАЛПА (ВЫБОР ЦЕЛИ) ===
     if (gameState.state === 'ARTILLERY_AIMING' && gameState.selectedUnit) {
         let u = gameState.selectedUnit;
         let dist = Math.abs(u.x - x) + Math.abs(u.y - y);
@@ -483,6 +483,13 @@ function handleMapClick(e) {
             alert("Точка прицеливания слишком далеко!");
             return;
         }
+
+        // Просто фиксируем точку прицела и ждем подтверждения
+        gameState.artTarget = { x: x, y: y };
+        updateUI();
+        renderAll();
+        return;
+    }
 
         let area = u.type.artArea; // 4 для РСЗО, 2 для миномета
         let shots = u.type.artShots; // 3 ракеты у РСЗО, 1 мина у миномета
@@ -1122,9 +1129,56 @@ window.resupplyUnit = function() {
 window.startArtilleryTargeting = function() {
     if (gameState.state === 'ARTILLERY_AIMING') {
         gameState.state = 'SELECTED';
+        gameState.artTarget = null;
     } else {
         gameState.state = 'ARTILLERY_AIMING';
+        gameState.artTarget = null;
     }
+    updateUI();
+    renderAll();
+};
+
+window.confirmArtilleryFire = function() {
+    if (gameState.state !== 'ARTILLERY_AIMING' || !gameState.selectedUnit || !gameState.artTarget) return;
+
+    let u = gameState.selectedUnit;
+    let x = gameState.artTarget.x;
+    let y = gameState.artTarget.y;
+    let area = u.type.artArea; 
+    let shots = u.type.artShots; 
+    
+    // Левый верхний угол зоны поражения
+    let startX = x - Math.floor(area / 2);
+    let startY = y - Math.floor(area / 2);
+
+    let hitLog = [];
+    // Рандомно раскидываем снаряды по квадрату
+    for(let i = 0; i < shots; i++) {
+        let rx = startX + Math.floor(Math.random() * area);
+        let ry = startY + Math.floor(Math.random() * area);
+        
+        if (rx >= 0 && rx < GRID_SIZE && ry >= 0 && ry < GRID_SIZE) {
+            let target = getUnitAt(rx, ry);
+            if (target) {
+                let dmg = u.type.attack;
+                target.hp -= dmg;
+                hitLog.push(`💥 ${target.type.name} получил ${dmg} урона!`);
+                
+                if (target.hp <= 0) {
+                    gameState.units = gameState.units.filter(unit => unit !== target);
+                    hitLog.push(`💀 ${target.type.name} УНИЧТОЖЕН!`);
+                }
+            }
+        }
+    }
+
+    if (hitLog.length > 0) alert("РАПОРТ ОБ УДАРЕ:\n" + hitLog.join('\n'));
+    else alert("Снаряды легли мимо целей. Только землю вспахали.");
+
+    u.cooldown = u.type.maxCooldown; 
+    u.hasMoved = true;
+    gameState.state = 'IDLE';
+    gameState.artTarget = null;
     updateUI();
     renderAll();
 };
