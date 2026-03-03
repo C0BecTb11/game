@@ -780,13 +780,17 @@ function attackUnit(attacker, target) {
         return;
     }
 
-        // === ПРАВИЛА ПВО ===
+    // === СТРОГИЕ ПРАВИЛА ПВО И АРТИЛЛЕРИИ ===
     if (attacker.type.isAntiAir && !target.type.isAir) {
         alert("Солдат с ПЗРК может стрелять ТОЛЬКО по воздушным целям!");
         return;
     }
-    if (target.type.isAir && !attacker.type.isAntiAir && !attacker.type.isAir && !attacker.type.isInfantry) {
-        alert("Из этого орудия невозможно попасть по летящей цели! Нужна Пехота, ПЗРК или Авиация.");
+    if (target.type.isAir && !attacker.type.isAntiAir) {
+        alert("По воздушным целям может стрелять ТОЛЬКО Солдат ПЗРК!");
+        return;
+    }
+    if (attacker.type.isArtillery) {
+        alert("Артиллерия бьет только по площади! Нажмите 'Навести удар' в меню юнита.");
         return;
     }
 
