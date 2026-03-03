@@ -272,6 +272,40 @@ function updateUI() {
                 }
             }
 
+                        // --- ОБНОВЛЕНИЕ КНОПОК АРТИЛЛЕРИИ ---
+            const artControls = document.getElementById('artillery-controls');
+            const btnArtFire = document.getElementById('btn-artillery-fire');
+            const artCdText = document.getElementById('art-cooldown-text');
+            const artCdVal = document.getElementById('art-cd-val');
+
+            if (artControls && btnArtFire && artCdText && artCdVal) {
+                if (u.type.isArtillery && u.owner === window.myPlayerId) {
+                    artControls.classList.remove('hidden');
+                    let cd = u.cooldown || 0;
+                    
+                    if (cd > 0) {
+                        btnArtFire.classList.add('hidden');
+                        artCdText.classList.remove('hidden');
+                        artCdVal.innerText = cd;
+                    } else if (u.hasMoved) {
+                        btnArtFire.classList.add('hidden');
+                        artCdText.classList.add('hidden');
+                    } else {
+                        btnArtFire.classList.remove('hidden');
+                        artCdText.classList.add('hidden');
+                        if (gameState.state === 'ARTILLERY_AIMING') {
+                            btnArtFire.innerText = "ОТМЕНА ПРИЦЕЛИВАНИЯ";
+                            btnArtFire.style.background = "#aaa";
+                        } else {
+                            btnArtFire.innerText = "🎯 Навести удар";
+                            btnArtFire.style.background = "#e64a19";
+                        }
+                    }
+                } else {
+                    artControls.classList.add('hidden');
+                }
+            }
+            
             panel.classList.remove('hidden');
         } else {
             panel.classList.add('hidden');
@@ -413,6 +447,28 @@ function renderAll() {
     if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
         ctx.fillStyle = 'rgba(25, 118, 210, 0.2)'; 
         ctx.fillRect(0, 0, GRID_SIZE * TILE_SIZE, GRID_SIZE * TILE_SIZE); 
+    }
+
+        // --- ПОДСВЕТКА АРТИЛЛЕРИЙСКОГО ПРИЦЕЛА (Квадрат 4x4 или 2x2) ---
+    if (gameState.state === 'ARTILLERY_AIMING' && gameState.selectedUnit) {
+        let u = gameState.selectedUnit;
+        let area = u.type.artArea;
+        
+        ctx.fillStyle = 'rgba(255, 87, 34, 0.2)'; // Оранжевая подсветка всего радиуса поражения
+        let reachable = getReachableCells(u); // Используем дальность атаки как радиус
+        for (let ty = 0; ty < GRID_SIZE; ty++) {
+            for (let tx = 0; tx < GRID_SIZE; tx++) {
+                let dist = Math.abs(u.x - tx) + Math.abs(u.y - ty);
+                if (dist <= u.type.attackRange) {
+                    ctx.fillRect(tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+        }
+        
+        // Подсказка, что при клике накроет квадрат area x area
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText(`Наведи на цель! Разброс: ${area}x${area}`, camera.x + canvas.width/2 - 100, camera.y + 50);
     }
 
     // --- ОТРИСОВКА ЛИНИИ АВТОПИЛОТА (ИСКЛЮЧИТЕЛЬНО ДЛЯ СВОИХ ЮНИТОВ) ---
