@@ -130,14 +130,14 @@ function initControls() {
     document.getElementById('buy-transport').onclick = () => prepareBuy('TRANSPORT');
 
         // Новые юниты ПВО и Артиллерии
-    document.getElementById('buy-pzrk').onclick = () => buyUnit('PZRK');
-    document.getElementById('buy-mortar').onclick = () => buyUnit('MORTAR');
-    document.getElementById('buy-rszo').onclick = () => buyUnit('RSZO');
+    document.getElementById('buy-pzrk').onclick = () => prepareBuy('PZRK');
+    document.getElementById('buy-mortar').onclick = () => prepareBuy('MORTAR');
+    document.getElementById('buy-rszo').onclick = () => prepareBuy('RSZO');
     
     // Авиация
-    document.getElementById('buy-mi8').onclick = () => buyUnit('MI8');
-    document.getElementById('buy-ka52').onclick = () => buyUnit('KA52');
-    document.getElementById('buy-su25').onclick = () => buyUnit('SU25');
+    document.getElementById('buy-mi8').onclick = () => prepareBuy('MI8');
+    document.getElementById('buy-ka52').onclick = () => prepareBuy('KA52');
+    document.getElementById('buy-su25').onclick = () => prepareBuy('SU25');
     
     document.getElementById('end-turn').onclick = endTurn;
 
