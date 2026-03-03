@@ -272,7 +272,7 @@ function updateUI() {
                 }
             }
 
-                        // --- ОБНОВЛЕНИЕ КНОПОК АРТИЛЛЕРИИ ---
+            // --- ОБНОВЛЕНИЕ КНОПОК АРТИЛЛЕРИИ ---
             const artControls = document.getElementById('artillery-controls');
             const btnArtFire = document.getElementById('btn-artillery-fire');
             const artCdText = document.getElementById('art-cooldown-text');
@@ -293,18 +293,29 @@ function updateUI() {
                     } else {
                         btnArtFire.classList.remove('hidden');
                         artCdText.classList.add('hidden');
+                        
+                        // Логика переключения кнопки
                         if (gameState.state === 'ARTILLERY_AIMING') {
-                            btnArtFire.innerText = "ОТМЕНА ПРИЦЕЛИВАНИЯ";
-                            btnArtFire.style.background = "#aaa";
+                            if (gameState.artTarget) {
+                                btnArtFire.innerText = "🔥 ОТКРЫТЬ ОГОНЬ!";
+                                btnArtFire.style.background = "#d32f2f";
+                                btnArtFire.onclick = confirmArtilleryFire;
+                            } else {
+                                btnArtFire.innerText = "ОТМЕНА ПРИЦЕЛИВАНИЯ";
+                                btnArtFire.style.background = "#aaa";
+                                btnArtFire.onclick = startArtilleryTargeting;
+                            }
                         } else {
                             btnArtFire.innerText = "🎯 Навести удар";
                             btnArtFire.style.background = "#e64a19";
+                            btnArtFire.onclick = startArtilleryTargeting;
                         }
                     }
                 } else {
                     artControls.classList.add('hidden');
                 }
             }
+
             
             panel.classList.remove('hidden');
         } else {
@@ -449,13 +460,13 @@ function renderAll() {
         ctx.fillRect(0, 0, GRID_SIZE * TILE_SIZE, GRID_SIZE * TILE_SIZE); 
     }
 
-        // --- ПОДСВЕТКА АРТИЛЛЕРИЙСКОГО ПРИЦЕЛА (Квадрат 4x4 или 2x2) ---
+    // --- ПОДСВЕТКА АРТИЛЛЕРИЙСКОГО ПРИЦЕЛА (Квадрат 4x4 или 2x2) ---
     if (gameState.state === 'ARTILLERY_AIMING' && gameState.selectedUnit) {
         let u = gameState.selectedUnit;
         let area = u.type.artArea;
         
-        ctx.fillStyle = 'rgba(255, 87, 34, 0.2)'; // Оранжевая подсветка всего радиуса поражения
-        let reachable = getReachableCells(u); // Используем дальность атаки как радиус
+        // 1. Тусклая оранжевая подсветка дальности стрельбы
+        ctx.fillStyle = 'rgba(255, 87, 34, 0.15)'; 
         for (let ty = 0; ty < GRID_SIZE; ty++) {
             for (let tx = 0; tx < GRID_SIZE; tx++) {
                 let dist = Math.abs(u.x - tx) + Math.abs(u.y - ty);
@@ -465,10 +476,31 @@ function renderAll() {
             }
         }
         
-        // Подсказка, что при клике накроет квадрат area x area
+        // 2. Отрисовка зафиксированного квадрата прицела
+        if (gameState.artTarget) {
+            let startX = gameState.artTarget.x - Math.floor(area / 2);
+            let startY = gameState.artTarget.y - Math.floor(area / 2);
+            
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.4)'; // Красная зона поражения
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 2;
+            
+            for(let dy = 0; dy < area; dy++) {
+                for(let dx = 0; dx < area; dx++) {
+                    let hx = startX + dx;
+                    let hy = startY + dy;
+                    if (hx >= 0 && hx < GRID_SIZE && hy >= 0 && hy < GRID_SIZE) {
+                        ctx.fillRect(hx * TILE_SIZE, hy * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.strokeRect(hx * TILE_SIZE, hy * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    }
+                }
+            }
+            ctx.lineWidth = 1;
+        }
+        
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 20px sans-serif';
-        ctx.fillText(`Наведи на цель! Разброс: ${area}x${area}`, camera.x + canvas.width/2 - 100, camera.y + 50);
+        ctx.fillText(`Выберите клетку для удара! Разброс: ${area}x${area}`, camera.x + canvas.width/2 - 150, camera.y + 50);
     }
 
     // --- ОТРИСОВКА ЛИНИИ АВТОПИЛОТА (ИСКЛЮЧИТЕЛЬНО ДЛЯ СВОИХ ЮНИТОВ) ---
