@@ -156,7 +156,13 @@
                             </div>
                         </div>
                     </div>
-
+                    
+                    <div id="artillery-controls" class="hidden" style="margin-top: 10px; border-top: 1px dashed #777; padding-top: 5px;">
+                    <div style="font-size: 0.75rem; color: #ff5722; text-align: center; margin-bottom: 5px;">АРТИЛЛЕРИЯ:</div>
+                    <div id="art-cooldown-text" class="hidden" style="text-align: center; color: #aaa; font-size: 0.9rem; margin-bottom: 5px;">Перезарядка: <span id="art-cd-val">0</span> ход.</div>
+                    <button id="btn-artillery-fire" onclick="startArtilleryTargeting()" style="width: 100%; padding: 6px; background: #e64a19; color: white; border: 1px solid #bf360c; border-radius: 3px; cursor: pointer; font-weight: bold;">🎯 Навести удар</button>
+                    </div>
+                    
                     <div id="sup-auto-controls" class="hidden" style="margin-top: 10px; border-top: 1px dashed #777; padding-top: 5px;">
                         <div style="font-size: 0.75rem; color: #64b5f6; text-align: center; margin-bottom: 5px;">АВТОМАРШРУТ:</div>
                         <button id="btn-set-route" onclick="toggleRouteMode()" style="width: 100%; padding: 6px; background: #1976d2; color: white; border: 1px solid #115293; border-radius: 3px; cursor: pointer; font-weight: bold;">📍 Указать цель</button>
@@ -176,6 +182,7 @@
                     <button id="buy-miner">Минёр (100)</button>
                     <button id="buy-rpk">Пулемет (50)</button>
                     <button id="buy-rpg">Гранатомет (50)</button>
+                    <button id="buy-pzrk">Солдат ПЗРК (120)</button>
                     <button id="buy-sniper">Снайпер (175)</button>
                     <button id="buy-specnaz">Спецназ (150)</button>
                 </div>
@@ -185,12 +192,21 @@
                     <button id="buy-transport">Транспорт (60)</button>
                     <button id="buy-btr">БТР (200)</button>
                     <button id="buy-tank">Танк (350)</button>
+                    <button id="buy-mortar">Миномёт (150)</button>
+                    <button id="buy-rszo">РСЗО (400)</button>
                 </div>
 
                 <button class="shop-category-btn" onclick="toggleCategory('cat-logistics')">Логистика 🔽</button>
                 <div id="cat-logistics" class="shop-items hidden" style="margin-bottom: 20px;"> 
                     <button id="buy-supply">Снабжение (80)</button>
                 </div>
+
+                <button class="shop-category-btn" onclick="toggleCategory('cat-air')">Воздушная техника 🔽</button>
+                <div id="cat-air" class="shop-items hidden" style="margin-bottom: 20px;"> 
+                <button id="buy-mi8">Ми-8АМТШ (250)</button>
+                <button id="buy-ka52">Ка-52 (450)</button>
+                <button id="buy-su25">Су-25СМ3 (600)</button>
+                </div>       
                         </aside>
         </div>
     </div>
