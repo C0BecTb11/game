@@ -490,45 +490,6 @@ function handleMapClick(e) {
         renderAll();
         return;
     }
-
-        let area = u.type.artArea; // 4 для РСЗО, 2 для миномета
-        let shots = u.type.artShots; // 3 ракеты у РСЗО, 1 мина у миномета
-        
-        // Левый верхний угол зоны поражения
-        let startX = x - Math.floor(area / 2);
-        let startY = y - Math.floor(area / 2);
-
-        let hitLog = [];
-        // Рандомно раскидываем снаряды по квадрату!
-        for(let i = 0; i < shots; i++) {
-            let rx = startX + Math.floor(Math.random() * area);
-            let ry = startY + Math.floor(Math.random() * area);
-            
-            if (rx >= 0 && rx < GRID_SIZE && ry >= 0 && ry < GRID_SIZE) {
-                let target = getUnitAt(rx, ry);
-                if (target) {
-                    let dmg = u.type.attack;
-                    target.hp -= dmg;
-                    hitLog.push(`💥 ${target.type.name} получил ${dmg} урона!`);
-                    
-                    if (target.hp <= 0) {
-                        gameState.units = gameState.units.filter(unit => unit !== target);
-                        hitLog.push(`💀 ${target.type.name} УНИЧТОЖЕН!`);
-                    }
-                }
-            }
-        }
-
-        if (hitLog.length > 0) alert("РАПОРТ ОБ УДАРЕ:\n" + hitLog.join('\n'));
-        else alert("Снаряды легли мимо целей. Только землю вспахали.");
-
-        u.cooldown = u.type.maxCooldown; // Устанавливаем таймер перезарядки
-        u.hasMoved = true;
-        gameState.state = 'IDLE';
-        updateUI();
-        renderAll();
-        return;
-    }
     
         // === ЛОГИКА АВТОПИЛОТА (ЗАДАЕМ ЦЕЛЬ) ===
     if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
