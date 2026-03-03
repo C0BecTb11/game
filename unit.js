@@ -56,7 +56,7 @@ const UNIT_TYPES = {
     },
         RSZO: { 
         id: 'rszo', name: "РСЗО", imgSrc: "./images/team-r-rszo.png", 
-        cost: 400, maxHp: 20, attack: 30, attackRange: 15, moveRange: 3, visionRange: 6, canCapture: false, 
+        cost: 400, maxHp: 20, attack: 30, attackRange: 15, moveRange: 5, visionRange: 4, canCapture: false, 
         isArmor: true, isArtillery: true, artArea: 4, artShots: 3, maxCooldown: 4 
     },
     MORTAR: { 
@@ -66,7 +66,7 @@ const UNIT_TYPES = {
     },
     PZRK: { // Противовоздушная пехота
         id: 'pzrk', name: "Солдат ПЗРК", imgSrc: "./images/team-r-ptrk.png", 
-        cost: 120, maxHp: 10, attack: 25, attackRange: 5, moveRange: 2, visionRange: 6, canCapture: true,
+        cost: 120, maxHp: 10, attack: 25, attackRange: 7, moveRange: 3, visionRange: 5, canCapture: true,
         isInfantry: true, isAntiAir: true // Специальный флаг для ПВО
     },
 
@@ -78,12 +78,12 @@ const UNIT_TYPES = {
     },
     KA52: { 
         id: 'ka52', name: "Ка-52 Аллигатор", imgSrc: "./images/team-r-ka52.png", 
-        cost: 450, maxHp: 35, attack: 15, attackRange: 4, moveRange: 7, visionRange: 7, canCapture: false, 
+        cost: 450, maxHp: 25, attack: 15, attackRange: 4, moveRange: 7, visionRange: 7, canCapture: false, 
         isAir: true, bonusArmorDamage: 15 
     },
     SU25: { 
         id: 'su25', name: "Су-25СМ3", imgSrc: "./images/team-r-su25.png", 
-        cost: 600, maxHp: 40, attack: 25, attackRange: 5, moveRange: 10, visionRange: 8, canCapture: false, 
+        cost: 600, maxHp: 25, attack: 25, attackRange: 5, moveRange: 10, visionRange: 8, canCapture: false, 
         isAir: true, bonusArmorDamage: 20 
 }
 };
