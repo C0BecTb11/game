@@ -140,6 +140,27 @@ function initControls() {
     document.getElementById('buy-mi8').onclick = () => prepareBuy('MI8');
     document.getElementById('buy-ka52').onclick = () => prepareBuy('KA52');
     document.getElementById('buy-su25').onclick = () => prepareBuy('SU25');
+
+        // --- КНОПКИ ФРАКЦИИ U (СИНИЕ) ---
+    document.getElementById('buy-u-soldier').onclick = () => prepareBuy('U_SOLDIER');
+    document.getElementById('buy-u-rpk').onclick = () => prepareBuy('U_RPK');
+    document.getElementById('buy-u-grenader').onclick = () => prepareBuy('U_GRENADER');
+    document.getElementById('buy-u-rpg').onclick = () => prepareBuy('U_RPG'); // Универсал
+    document.getElementById('buy-u-medic').onclick = () => prepareBuy('U_MEDIC');
+    document.getElementById('buy-u-miner').onclick = () => prepareBuy('U_MINER');
+    document.getElementById('buy-u-specnaz').onclick = () => prepareBuy('U_SPECNAZ');
+    document.getElementById('buy-u-sniper').onclick = () => prepareBuy('U_SNIPER');
+    
+    document.getElementById('buy-u-transport').onclick = () => prepareBuy('U_TRANSPORT');
+    document.getElementById('buy-u-bradley').onclick = () => prepareBuy('U_BRADLEY');
+    document.getElementById('buy-u-abrams').onclick = () => prepareBuy('U_ABRAMS');
+    document.getElementById('buy-u-mortar').onclick = () => prepareBuy('U_MORTAR');
+    document.getElementById('buy-u-himars').onclick = () => prepareBuy('U_HIMARS');
+    document.getElementById('buy-u-supply').onclick = () => prepareBuy('U_SUPPLY');
+    
+    document.getElementById('buy-u-blackhawk').onclick = () => prepareBuy('U_BLACKHAWK');
+    document.getElementById('buy-u-ah64').onclick = () => prepareBuy('U_AH64');
+    document.getElementById('buy-u-a10').onclick = () => prepareBuy('U_A10');
     
     document.getElementById('end-turn').onclick = endTurn;
 
@@ -751,17 +772,25 @@ function attackUnit(attacker, target) {
     }
 
     // === СТРОГИЕ ПРАВИЛА ПВО И АРТИЛЛЕРИИ ===
+    
+    // 1. Атакующий - ПВО (но проверяем, не универсал ли он)
     if (attacker.type.isAntiAir && !target.type.isAir) {
-        alert("Солдат с ПЗРК может стрелять ТОЛЬКО по воздушным целям!");
-        return;
+        // ЕСЛИ у бойца нет бонуса по броне (обычный ПЗРК), то он не может бить землю.
+        // А ЕСЛИ есть (как у Синего RPG), то он может бить землю!
+        if (!attacker.type.bonusArmorDamage) {
+            alert("Этот юнит может стрелять ТОЛЬКО по воздушным целям!");
+            return;
+        }
     }
-    if (target.type.isAir && !attacker.type.isAntiAir) {
-        alert("По воздушным целям может стрелять ТОЛЬКО Солдат ПЗРК!");
-        return;
-    }
-    if (attacker.type.isArtillery) {
-        alert("Артиллерия бьет только по площади! Нажмите 'Навести удар' в меню юнита.");
-        return;
+
+    // 2. Цель - Воздух
+    if (target.type.isAir) {
+        // По воздуху бьют только ПВО, Авиация или Пехота (в некоторых случаях, если разрешим)
+        // В нашем случае: ПВО или Авиация.
+        if (!attacker.type.isAntiAir && !attacker.type.isAir) {
+            alert("По воздушным целям нужно спецсредство (ПВО или Авиация)!");
+            return;
+        }
     }
 
     // 1. Базовый урон
