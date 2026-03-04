@@ -40,8 +40,8 @@ function startGame(mapType, networkData = null) {
         gameState = {
             turn: 1, state: 'IDLE',
             players: {
-                1: { points: 100, color: '#ff5555', name: myName },
-                2: { points: 100, color: '#5555ff', name: 'Ожидание...' }
+                1: { points: 100, color: '#ff5555', name: myName, faction: null },
+                2: { points: 100, color: '#5555ff', name: 'Ожидание...', faction: null }
             },
             units: [], selectedUnit: null, unitToPlace: null, mines: [], stashes: [] // <--
         };
@@ -57,6 +57,7 @@ function startGame(mapType, networkData = null) {
         if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
         updateUI();
         renderAll();
+                if (typeof checkFactionSelection === 'function') checkFactionSelection();
     }
 }
 
@@ -112,6 +113,7 @@ window.applyNetworkState = function(newState, newMap, newPoints) {
     
     updateUI();
     renderAll();
+    if (typeof checkFactionSelection === 'function') checkFactionSelection();
 };
 
 function initControls() {
