@@ -85,7 +85,100 @@ const UNIT_TYPES = {
         id: 'su25', name: "Су-25СМ3", imgSrc: "./images/team-r-su25.png", 
         cost: 600, maxHp: 25, attack: 25, attackRange: 5, moveRange: 10, visionRange: 8, canCapture: false, 
         isAir: true, bonusArmorDamage: 20 
-}
+},
+
+        // ==========================================
+    // === Армия США (СИНИЕ) ===
+    // ==========================================
+
+    // --- ПЕХОТА ---
+    U_SOLDIER: { 
+        id: 'u_soldier', name: "Солдат (U)", imgSrc: "./images/taem-u-soldier.png", 
+        cost: 20, maxHp: 10, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true, isInfantry: true 
+    },
+    U_RPK: { 
+        id: 'u_rpk', name: "Пулеметчик (U)", imgSrc: "./images/team-u-rpk.png", 
+        cost: 50, maxHp: 15, attack: 5, attackRange: 4, moveRange: 3, visionRange: 5, canCapture: true, isInfantry: true 
+    },
+    U_GRENADER: { 
+        id: 'u_grenader', name: "Гренадер", imgSrc: "./images/team-u-grenader.png", 
+        // Чуть сильнее пулеметчика:
+        cost: 60, maxHp: 18, attack: 6, attackRange: 4, moveRange: 3, visionRange: 5, canCapture: true, isInfantry: true 
+    },
+    U_RPG: { 
+        id: 'u_rpg', name: "SMAW (РПГ+ПВО)", imgSrc: "./images/team-u-rpg.png", 
+        // Универсальный боец: бьет технику и воздух!
+        cost: 100, maxHp: 15, attack: 3, attackRange: 4, moveRange: 3, visionRange: 4, canCapture: true, 
+        isInfantry: true, bonusArmorDamage: 13, isAntiAir: true 
+    },
+    U_MEDIC: { 
+        id: 'u_medic', name: "Медик (U)", imgSrc: "./images/team-u-medic.png", 
+        cost: 70, maxHp: 8, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true,
+        isInfantry: true, maxMedkits: 5, healAmount: 5 
+    },
+    U_MINER: { 
+        id: 'u_miner', name: "Минёр (U)", imgSrc: "./images/team-u-miner.png", 
+        cost: 100, maxHp: 8, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true,
+        isInfantry: true, maxMines: 3, mineDamage: 12 
+    },
+    U_SPECNAZ: { 
+        id: 'u_specnaz', name: "Дельта", imgSrc: "./images/team-u-spec.png", 
+        cost: 150, maxHp: 15, attack: 8, attackRange: 4, moveRange: 4, visionRange: 5, canCapture: true, isInfantry: true 
+    },
+    U_SNIPER: { 
+        id: 'u_sniper', name: "Снайпер (U)", imgSrc: "./images/team-u-sniper.png", 
+        cost: 175, maxHp: 8, attack: 8, attackRange: 5, moveRange: 2, visionRange: 6, canCapture: true, isInfantry: true 
+    },
+
+    // --- ТЕХНИКА ---
+    U_TRANSPORT: { 
+        id: 'u_transport', name: "Хамви", imgSrc: "./images/team-u-peh.png", 
+        cost: 60, maxHp: 8, attack: 0, attackRange: 0, moveRange: 7, visionRange: 4, canCapture: false, 
+        isArmor: true, transportCapacity: 2 
+    },
+    U_BRADLEY: { 
+        id: 'u_bradley', name: "M2 Bradley", imgSrc: "./images/team-u-bredli.png", 
+        cost: 200, maxHp: 30, attack: 5, attackRange: 3, moveRange: 4, visionRange: 6, canCapture: false, 
+        isArmor: true, transportCapacity: 1 
+    },
+    U_ABRAMS: { 
+        id: 'u_abrams', name: "M1 Abrams", imgSrc: "./images/team-u-abrams.png", 
+        cost: 350, maxHp: 50, attack: 12, attackRange: 3, moveRange: 4, visionRange: 5, canCapture: false, isArmor: true 
+    },
+    U_MORTAR: { 
+        id: 'u_mortar', name: "Миномёт (U)", imgSrc: "./images/team-u-minomet.png", 
+        cost: 150, maxHp: 10, attack: 20, attackRange: 8, moveRange: 2, visionRange: 5, canCapture: true,
+        isInfantry: true, isArtillery: true, artArea: 2, artShots: 1, maxCooldown: 0 
+    },
+    U_HIMARS: { 
+        id: 'u_himars', name: "HIMARS", imgSrc: "./images/team-u-himars.png", 
+        cost: 400, maxHp: 20, attack: 30, attackRange: 15, moveRange: 3, visionRange: 6, canCapture: false, 
+        isArmor: true, isArtillery: true, artArea: 4, artShots: 3, maxCooldown: 4 
+    },
+
+    // --- ЛОГИСТИКА ---
+    U_SUPPLY: { 
+        id: 'u_supply', name: "Снабжение (U)", imgSrc: "./images/team-u-suply.png", 
+        cost: 80, maxHp: 8, attack: 0, attackRange: 0, moveRange: 7, visionRange: 4, canCapture: false, maxCargo: 10 
+    },
+
+    // --- АВИАЦИЯ ---
+    U_BLACKHAWK: { 
+        id: 'u_blackhawk', name: "Black Hawk", imgSrc: "./images/team-u-black.png", 
+        cost: 250, maxHp: 25, attack: 5, attackRange: 2, moveRange: 8, visionRange: 7, canCapture: false, 
+        isAir: true, transportCapacity: 4 
+    },
+    U_AH64: { 
+        id: 'u_ah64', name: "AH-64 Apache", imgSrc: "./images/team-u-ah.png", 
+        cost: 450, maxHp: 25, attack: 15, attackRange: 4, moveRange: 7, visionRange: 7, canCapture: false, 
+        isAir: true, bonusArmorDamage: 15 
+    },
+    U_A10: { 
+        id: 'u_a10', name: "A-10C Warthog", imgSrc: "./images/team-u-a10.png", 
+        cost: 600, maxHp: 25, attack: 25, attackRange: 5, moveRange: 10, visionRange: 8, canCapture: false, 
+        isAir: true, bonusArmorDamage: 20 
+            }
+
 };
 
 const loadedImages = {};
