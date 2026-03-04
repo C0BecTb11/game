@@ -63,6 +63,18 @@
             </div>
         </div>
 
+                <div id="faction-selection-screen" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.9); z-index: 99999; display: flex; justify-content: center; align-items: center; text-align: center;">
+            <div class="modal-content" style="background-color: #1e1e1e; border: 2px solid #444; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+                <h2 style="color: #ffaa00; margin-bottom: 15px; font-size: 2rem;">ВЫБОР АРМИИ</h2>
+                <p style="color: #ccc; margin-bottom: 25px; font-size: 1.1rem;">Командир, выберите сторону конфликта! Ваш выбор будет сохранен за вашим аккаунтом на эту партию.</p>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button onclick="selectFaction('red')" style="background-color: #8B0000; color: white; border: 2px solid #ff4444; padding: 15px; font-size: 1.2rem; flex: 1; border-radius: 8px; cursor: pointer; font-weight: bold;">🔴 Армия РФ</button>
+                    <button onclick="selectFaction('blue')" style="background-color: #00008B; color: white; border: 2px solid #5555ff; padding: 15px; font-size: 1.2rem; flex: 1; border-radius: 8px; cursor: pointer; font-weight: bold;">🔵 Армия США</button>
+                </div>
+                <p style="color: #777; margin-top: 20px; font-size: 0.9rem;">В будущем магазин юнитов будет зависеть от выбранной фракции.</p>
+            </div>
+                </div>
+        
         <header id="top-bar">
             <div class="player-stat player-1"><span id="p1-name">Красные</span>: <span id="p1-points">100</span> 💰</div>
             <div id="turn-indicator" class="turn-p1">ОЖИДАНИЕ...</div>
@@ -223,6 +235,7 @@
     <script src="db.js?update=999"></script>
     <script src="auth.js?update=999"></script>
     <script src="unit.js?update=999"></script>
+    <script src="faction.js?update=999"></script>
     <script src="map.js?update=999"></script>
     <script src="presence.js?update=999"></script>
     <script src="render.js?update=999"></script> 
