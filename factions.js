@@ -19,7 +19,11 @@ const FACTIONS = {
         name: 'Синие',
         color: '#5555ff',
         // У Синих пока пусто (ждут поставок НАТО?)
-        allowedUnits: [] 
+        allowedUnits: [
+            'u_soldier', 'u_medic', 'u_miner', 'u_rpk', 'u_grenader', 'u_rpg', 'u_sniper', 'u_specnaz',
+            'u_transport', 'u_bradley', 'u_abrams', 'u_mortar', 'u_himars',
+            'u_blackhawk', 'u_ah64', 'u_a10',
+            'u_supply' ]
     }
 };
 
