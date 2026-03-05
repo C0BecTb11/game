@@ -21,7 +21,7 @@ function generateMap(mapType) {
     capturePoints = [];
     
     // 🔥 РУБИЛЬНИК ДЛЯ ТЕСТОВ ОТКЛЮЧЕН
-    // mapType = 'test'; 
+     mapType = 'test'; 
 
     if (mapType === 'test') {
         GRID_SIZE = 15; 
