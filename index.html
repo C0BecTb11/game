@@ -51,6 +51,31 @@
         <button id="btn-menu-help" style="margin-top: 20px; background-color: #444; padding: 10px 20px; border-radius: 5px; color: white; border: 1px solid #666; cursor: pointer;">📖 Полевой Устав</button>
     </div>
 
+        <div id="create-game-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; display: flex; justify-content: center; align-items: center;">
+        <div style="background: #222; padding: 30px; border: 2px solid #444; border-radius: 10px; width: 400px; text-align: center;">
+            <h2 style="color: #ffaa00; margin-bottom: 20px;">НАСТРОЙКИ ОПЕРАЦИИ</h2>
+            
+            <label style="color: #ccc; display: block; margin-bottom: 5px;">Размер карты:</label>
+            <select id="setting-map-size" style="width: 100%; padding: 10px; margin-bottom: 15px; background: #333; color: white; border: 1px solid #555;">
+                <option value="80">Масштабная (80x80)</option>
+                <option value="50">Локальная (50x50)</option>
+            </select>
+
+            <label style="color: #ccc; display: block; margin-bottom: 5px;">Режим боя:</label>
+            <select id="setting-game-mode" style="width: 100%; padding: 10px; margin-bottom: 25px; background: #333; color: white; border: 1px solid #555;">
+                <option value="1v1">Дуэль (1 на 1)</option>
+                <option value="2v2">Командный (2 на 2)</option>
+                <option value="1v3">Герой (1 против 3)</option>
+            </select>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="confirmCreateGame()" class="btn-primary">НАЧАТЬ</button>
+                <button onclick="document.getElementById('create-game-modal').classList.add('hidden')" style="background: #444;">ОТМЕНА</button>
+            </div>
+        </div>
+        </div>
+
+
     <div id="game-container" class="hidden">
         
         <div id="disconnect-screen" class="hidden">
@@ -198,13 +223,13 @@
                     <button id="buy-sniper">Снайпер (175)</button>
                     <button id="buy-specnaz">Спецназ (150)</button>
 
-                <button id="buy-u-soldier">Солдат U (20)</button>
-                <button id="buy-u-medic">Медик U (70)</button>
-                <button id="buy-u-miner">Минёр U (100)</button>
-                <button id="buy-u-rpk">Пулеметчик U (50)</button>
+                <button id="buy-u-soldier">Солдат (20)</button>
+                <button id="buy-u-medic">Медик (70)</button>
+                <button id="buy-u-miner">Минёр (100)</button>
+                <button id="buy-u-rpk">Пулеметчик (50)</button>
                 <button id="buy-u-grenader">Гренадер (60)</button>
                 <button id="buy-u-rpg">SMAW [ПВО+РПГ] (100)</button>
-                <button id="buy-u-sniper">Снайпер U (175)</button>
+                <button id="buy-u-sniper">Снайпер (175)</button>
                 <button id="buy-u-specnaz">Дельта (150)</button>
                 </div>
 
@@ -219,7 +244,7 @@
                     <button id="buy-u-transport">Транспортник (60)</button>
                 <button id="buy-u-bradley">M2 Bradley (200)</button>
                 <button id="buy-u-abrams">M1 Abrams (350)</button>
-                <button id="buy-u-mortar">Миномёт U (150)</button>
+                <button id="buy-u-mortar">Миномёт (150)</button>
                 <button id="buy-u-himars">HIMARS (400)</button>
                 </div>
 
@@ -227,7 +252,7 @@
                 <div id="cat-logistics" class="shop-items hidden" style="margin-bottom: 20px;"> 
                     <button id="buy-supply">Снабжение (80)</button>
 
-                    <button id="buy-u-supply">Снабжение U (80)</button>
+                    <button id="buy-u-supply">Снабжение (80)</button>
                 </div>
 
                 <button class="shop-category-btn" onclick="toggleCategory('cat-air')">Воздушная техника 🔽</button>
