@@ -6,24 +6,25 @@ const FACTIONS = {
         id: 'red',
         name: 'Красные',
         color: '#ff5555',
-        // Красные получают ВЕСЬ текущий арсенал
+        // Красные получают армию РФ
         allowedUnits: [
-            'soldier', 'medic', 'miner', 'rpk', 'rpg', 'pzrk', 'sniper', 'specnaz', // Пехота
-            'transport', 'btr', 'tank', 'mortar', 'rszo', // Техника
-            'mi8', 'ka52', 'su25', // Авиация
-            'supply' // Логистика
+            'soldier', 'medic', 'miner', 'rpk', 'rpg', 'pzrk', 'sniper', 'specnaz',
+            'transport', 'btr', 'tank', 'mortar', 'rszo',
+            'mi8', 'ka52', 'su25',
+            'supply'
         ]
     },
     blue: {
         id: 'blue',
         name: 'Синие',
         color: '#5555ff',
-        // У Синих пока пусто (ждут поставок НАТО?)
+        // Синие получают армию США (ВНИМАНИЕ: IDs с дефисами!)
         allowedUnits: [
-            'u_soldier', 'u_medic', 'u_miner', 'u_rpk', 'u_grenader', 'u_rpg', 'u_sniper', 'u_specnaz',
-            'u_transport', 'u_bradley', 'u_abrams', 'u_mortar', 'u_himars',
-            'u_blackhawk', 'u_ah64', 'u_a10',
-            'u_supply' ]
+            'u-soldier', 'u-medic', 'u-miner', 'u-rpk', 'u-grenader', 'u-rpg', 'u-sniper', 'u-specnaz',
+            'u-transport', 'u-bradley', 'u-abrams', 'u-mortar', 'u-himars',
+            'u-blackhawk', 'u-ah64', 'u-a10',
+            'u-supply' 
+        ]
     }
 };
 
@@ -48,7 +49,7 @@ window.selectFaction = function(factionId) {
     
     if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
     
-    applyFactionSettings(); // <-- Самый важный момент: обновляем магазин!
+    applyFactionSettings(); // Обновляем магазин
     updateUI();
 };
 
@@ -65,17 +66,19 @@ window.applyFactionSettings = function() {
     // Проходимся по всем типам юнитов из unit.js и скрываем/показываем кнопки
     for (let key in UNIT_TYPES) {
         const unit = UNIT_TYPES[key];
-        // Формируем ID кнопки (например, 'buy-soldier')
+        
+        // ВАЖНО: Формируем ID кнопки.
+        // Если unit.id = 'u-soldier', то ID кнопки = 'buy-u-soldier'.
         const btnId = `buy-${unit.id}`;
         const btn = document.getElementById(btnId);
         
         if (btn) {
             if (allowed.includes(unit.id)) {
-                // Если юнит разрешен — показываем и красим рамку в цвет фракции
+                // Если юнит в списке разрешенных для этой фракции
                 btn.classList.remove('hidden');
                 btn.style.border = `1px solid ${factionData.color}`;
             } else {
-                // Если запрещен — скрываем
+                // Если запрещен
                 btn.classList.add('hidden');
             }
         }
