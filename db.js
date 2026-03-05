@@ -15,14 +15,18 @@ if (window.supabase) {
     alert("Внимание! Сервер базы данных недоступен.");
 }
 
-// === СОЗДАНИЕ ИГРЫ (ИГРОК 1) ===
-async function createOnlineLobby(mapType) {
+// === СОЗДАНИЕ ИГРЫ (ОБНОВЛЕНО) ===
+async function createOnlineLobby(config) {
     if (!window.supabaseServer) return;
 
     try {
+        // Мы сохраняем конфиг прямо в структуру лобби, чтобы при подключении знать, что запускать
+        // Но так как у нас нет отдельной колонки config в базе, запихнем это в стартовый game_state
+        // Или просто передадим в startGame, а оно само сохранит в game_state
+        
         const { data, error } = await window.supabaseServer
             .from('lobbies')
-            .insert([{ map_type: mapType, status: 'waiting' }])
+            .insert([{ map_type: 'custom', status: 'waiting' }]) // map_type формальный
             .select();
 
         if (error) throw error;
@@ -32,18 +36,20 @@ async function createOnlineLobby(mapType) {
             window.isOnlineGame = true;
             window.myPlayerId = 1; 
             
-            // ЗАПОМИНАЕМ РОЛЬ В ПАМЯТИ
             localStorage.setItem('urban_room', window.currentLobbyId);
             localStorage.setItem('urban_role', 1);
             
-            alert(`🔥 Комната создана!\nКод: ${window.currentLobbyId}\nСкинь его другу.`);
+            // Запускаем игру с выбранными настройками!
+            startGame(config); 
             
-            startGame(mapType); 
+            // Сразу отправляем этот начальный стейт (с 4 игроками и картой) в базу
+            if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
+
+            alert(`🔥 Операция началась!\nКод доступа: ${window.currentLobbyId}`);
             subscribeToRealtime(); 
-            
             if (window.initPresence) window.initPresence(window.currentLobbyId, 1);
         }
-    } catch (error) { alert("Критическая ошибка: " + error.message); }
+    } catch (error) { alert("Ошибка: " + error.message); }
 }
 
 // === ПОДКЛЮЧЕНИЕ К ИГРЕ (ИГРОК 2 ИЛИ ПЕРЕПОДКЛЮЧЕНИЕ) ===
@@ -144,15 +150,11 @@ function subscribeToRealtime() {
         .subscribe();
 }
 
-// === ПРИВЯЗКА КНОПОК ===
 const btnCreate = document.getElementById('btn-create-online');
 if (btnCreate) {
-    btnCreate.onclick = async () => {
-        btnCreate.innerText = "Создание...";
-        btnCreate.disabled = true;
-        await createOnlineLobby('main');
-        btnCreate.innerText = "Создать онлайн игру";
-        btnCreate.disabled = false;
+    btnCreate.onclick = () => {
+        // Теперь просто открываем модальное окно
+        document.getElementById('create-game-modal').classList.remove('hidden');
     };
 }
 
@@ -168,3 +170,17 @@ if (btnJoin) {
         btnJoin.disabled = false;
     };
 }
+
+window.confirmCreateGame = async function() {
+    const size = document.getElementById('setting-map-size').value;
+    const mode = document.getElementById('setting-game-mode').value;
+    
+    const btn = document.querySelector('#create-game-modal .btn-primary');
+    btn.innerText = "Создание...";
+    btn.disabled = true;
+
+    await createOnlineLobby({ size: parseInt(size), mode: mode });
+
+    btn.innerText = "НАЧАТЬ";
+    btn.disabled = false;
+};
