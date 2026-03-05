@@ -566,14 +566,25 @@ function renderAll() {
         ctx.strokeRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         ctx.lineWidth = 1;
 
-        // --- ЛАЗЕРНЫЕ ПРИЦЕЛЫ (Теперь работают и для врагов, целящихся в тебя) ---
+        // --- ЛАЗЕРНЫЕ ПРИЦЕЛЫ (Только от врагов!) ---
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 5]); 
         
+        let myTeam = gameState.players[window.myPlayerId] ? gameState.players[window.myPlayerId].team : 0;
+
         gameState.units.forEach(targetUnit => {
-            // Цель должна быть врагом ВЫДЕЛЕННОГО юнита
-            if (targetUnit.owner !== gameState.selectedUnit.owner && visibleMap[targetUnit.y][targetUnit.x]) {
+            // Рисуем линию, только если:
+            // 1. Цель принадлежит ИГРОКУ (или его союзнику)
+            // 2. Атакующий принадлежит ВРАЖЕСКОЙ команде
+            
+            let targetOwnerTeam = gameState.players[targetUnit.owner].team;
+            let attackerTeam = gameState.players[gameState.selectedUnit.owner].team;
+
+            // Если выделен враг, и он целится в кого-то из НАШЕЙ команды
+            if (attackerTeam !== myTeam && targetOwnerTeam === myTeam && visibleMap[targetUnit.y][targetUnit.x]) {
+                
                 let dist = Math.abs(targetUnit.x - gameState.selectedUnit.x) + Math.abs(targetUnit.y - gameState.selectedUnit.y);
+                
                 if (dist <= gameState.selectedUnit.type.attackRange && checkLineOfSight(targetUnit.x, targetUnit.y, gameState.selectedUnit.x, gameState.selectedUnit.y, gameState.selectedUnit)) {
                     ctx.beginPath();
                     ctx.moveTo(targetUnit.x * TILE_SIZE + TILE_SIZE / 2, targetUnit.y * TILE_SIZE + TILE_SIZE / 2);
@@ -585,6 +596,7 @@ function renderAll() {
         });
         ctx.setLineDash([]); 
         ctx.lineWidth = 1;
+
     }
 
     gameState.units.forEach(u => {
