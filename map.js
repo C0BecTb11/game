@@ -16,21 +16,19 @@ const TILES = {
 let gameMap = [];
 let capturePoints = [];
 
-function generateMap(mapType) {
+function generateMap(size = 80) {
     gameMap = [];
     capturePoints = [];
     
-    // 🔥 РУБИЛЬНИК ДЛЯ ТЕСТОВ ОТКЛЮЧЕН
-     mapType = 'test'; 
+    GRID_SIZE = parseInt(size);
+    TILE_SIZE = GRID_SIZE <= 50 ? 45 : 40; // Если карта маленькая, клетки чуть крупнее для удобства
+    
+    console.log(`Генерация карты: ${GRID_SIZE}x${GRID_SIZE}`);
 
-    if (mapType === 'test') {
-        GRID_SIZE = 15; 
-        TILE_SIZE = 45; 
-        generateTestArena(); 
+    if (size === 'test') {
+        generateTestArena();
     } else {
-        GRID_SIZE = 80; 
-        TILE_SIZE = 40;
-        generateOrganicMainMap(); 
+        generateOrganicMainMap();
     }
 }
 
