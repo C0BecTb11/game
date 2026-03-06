@@ -30,7 +30,6 @@ function startGame(mapConfig = { size: 80, mode: '1v1' }, networkData = null) {
         let playersConfig = {};
         
         if (mapConfig.mode === '1v1') {
-        if (mapConfig.mode === '1v1') {
             playersConfig[1] = { team: 1, color: '#ff5555', name: myName, points: 100, faction: null };
             playersConfig[2] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null };
         } 
