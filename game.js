@@ -30,20 +30,24 @@ function startGame(mapConfig = { size: 80, mode: '1v1' }, networkData = null) {
         let playersConfig = {};
         
         if (mapConfig.mode === '1v1') {
+        if (mapConfig.mode === '1v1') {
             playersConfig[1] = { team: 1, color: '#ff5555', name: myName, points: 100, faction: null };
             playersConfig[2] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null };
         } 
         else if (mapConfig.mode === '2v2') {
-            playersConfig[1] = { team: 1, color: '#ff5555', name: myName, points: 100, faction: null }; // Красный
-            playersConfig[2] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null }; // Синий
-            playersConfig[3] = { team: 1, color: '#ff8888', name: 'Ожидание...', points: 100, faction: null }; // Розовый (союзник 1)
-            playersConfig[4] = { team: 2, color: '#8888ff', name: 'Ожидание...', points: 100, faction: null }; // Голубой (союзник 2)
+            // КОМАНДА 1 (Теплые цвета)
+            playersConfig[1] = { team: 1, color: '#ff5555', name: myName, points: 100, faction: null }; // Красный (Лидер)
+            playersConfig[3] = { team: 1, color: '#ffd700', name: 'Ожидание...', points: 100, faction: null }; // ЖЕЛТЫЙ (Союзник)
+
+            // КОМАНДА 2 (Холодные цвета)
+            playersConfig[2] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null }; // Синий (Лидер)
+            playersConfig[4] = { team: 2, color: '#9c27b0', name: 'Ожидание...', points: 100, faction: null }; // ФИОЛЕТОВЫЙ (Союзник)
         }
         else if (mapConfig.mode === '1v3') {
-            playersConfig[1] = { team: 1, color: '#ff5555', name: myName, points: 150, faction: null }; // Герой
+            playersConfig[1] = { team: 1, color: '#ff5555', name: myName, points: 350, faction: null }; 
             playersConfig[2] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null };
-            playersConfig[3] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null };
-            playersConfig[4] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null };
+            playersConfig[3] = { team: 2, color: '#9c27b0', name: 'Ожидание...', points: 100, faction: null };
+            playersConfig[4] = { team: 2, color: '#00bcd4', name: 'Ожидание...', points: 100, faction: null }; // Бирюзовый
         }
 
         gameState = {
