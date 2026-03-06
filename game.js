@@ -895,11 +895,24 @@ function endTurn() {
         }
     });
     
-    // 2. Доход
+    // 2. Доход (ОБЩИЙ ДЛЯ КОМАНДЫ)
     let income = 20;
-    capturePoints.forEach(pt => { if (pt.owner === gameState.turn) income += 15; });
-    gameState.players[gameState.turn].points += income;
     
+    // Определяем команду того, кто сейчас завершает ход
+    let currentTeam = gameState.players[gameState.turn].team;
+    
+    capturePoints.forEach(pt => { 
+        // Если у точки есть владелец...
+        if (pt.owner && gameState.players[pt.owner]) {
+            // ...и этот владелец из НАШЕЙ команды (я или мой союзник)
+            if (gameState.players[pt.owner].team === currentTeam) {
+                income += 15; // Точка приносит деньги!
+            }
+        }
+    });
+    
+    gameState.players[gameState.turn].points += income;
+
     // 3. Сброс кулдаунов
     gameState.units.forEach(u => { 
         if (u.owner === gameState.turn) {
