@@ -68,10 +68,14 @@
                 <option value="1v3">Герой (1 против 3)</option>
             </select>
 
-            <div style="display: flex; gap: 10px;">
-                <button onclick="confirmCreateGame()" class="btn-primary">НАЧАТЬ</button>
-                <button onclick="document.getElementById('create-game-modal').classList.add('hidden')" style="background: #444;">ОТМЕНА</button>
-            </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="confirmCreateGame()" class="btn-primary" style="flex: 1;">НАЧАТЬ ОНЛАЙН</button>
+                
+                <button onclick="startOfflineTest()" style="flex: 1; background: #ff9800; border-color: #f57c00; font-weight: bold;">🛠 ТЕСТ (ОФЛАЙН)</button>
+                
+                <button onclick="document.getElementById('create-game-modal').classList.add('hidden')" style="background: #444; flex: 0 0 100%;">ОТМЕНА</button>
+                        </div>
+            
         </div>
         </div>
 
