@@ -2,39 +2,54 @@
 // Этот файл отвечает ТОЛЬКО за отрисовку графики и обновление интерфейса (UI)
 
 function updateUI() {
-    // 1. ТУМАН ВОЙНЫ ДЛЯ ЭКОНОМИКИ
-    // Показываем очки игрока 1 и 2 (лидеров команд)
-    // Если мы в команде 1, видим очки P1. Если в команде 2 - P2.
+    // 1. ЭКОНОМИКА И ТУМАН ВОЙНЫ (ОБНОВЛЕНО)
     
-    const p1NameElem = document.getElementById('p1-name');
-    const p2NameElem = document.getElementById('p2-name');
+    // Получаем элементы
+    const p1Label = document.querySelector('.player-1'); // Весь блок слева
+    const p2Label = document.querySelector('.player-2'); // Весь блок справа
     
-    // Проверяем, есть ли игроки (на случай ошибок инициализации)
-    if (gameState.players && gameState.players[1]) {
-        if (p1NameElem) p1NameElem.innerText = gameState.players[1].name;
-        
+    if (gameState.players) {
         let myTeam = gameState.players[window.myPlayerId]?.team;
-        let p1Team = gameState.players[1].team;
         
-        // Видим очки P1, только если мы в одной команде или это офлайн-тест
-        if (myTeam === p1Team || gameState.isOffline) {
-            document.getElementById('p1-points').innerText = gameState.players[1].points;
-        } else {
-            document.getElementById('p1-points').innerText = "???";
-        }
-    }
+        // --- ЛЕВАЯ СТОРОНА (КОМАНДА 1: Красный + Желтый) ---
+        let t1Html = "";
+        let p1 = gameState.players[1];
+        let p3 = gameState.players[3]; // Союзник красного
 
-    if (gameState.players && gameState.players[2]) {
-        if (p2NameElem) p2NameElem.innerText = gameState.players[2].name;
-        
-        let myTeam = gameState.players[window.myPlayerId]?.team;
-        let p2Team = gameState.players[2].team;
-        
-        if (myTeam === p2Team || gameState.isOffline) {
-            document.getElementById('p2-points').innerText = gameState.players[2].points;
-        } else {
-            document.getElementById('p2-points').innerText = "???";
+        if (p1) {
+            // Показываем деньги, если это НАША команда или Офлайн-тест
+            let showMoney = (myTeam === 1 || gameState.isOffline);
+            let moneyText = showMoney ? p1.points : "???";
+            
+            // Формируем строку: "Красный: 100"
+            t1Html += `<span style="color:${p1.color}">${p1.name}</span>: ${moneyText}💰`;
+            
+            // Если есть союзник (режим 2v2)
+            if (p3) {
+                let p3Money = showMoney ? p3.points : "???";
+                // Добавляем вторую строку: " | Желтый: 100"
+                t1Html += ` <span style="color:#aaa">|</span> <span style="color:${p3.color}">${p3.name}</span>: ${p3Money}💰`;
+            }
         }
+        if (p1Label) p1Label.innerHTML = t1Html;
+
+        // --- ПРАВАЯ СТОРОНА (КОМАНДА 2: Синий + Фиолетовый) ---
+        let t2Html = "";
+        let p2 = gameState.players[2];
+        let p4 = gameState.players[4]; // Союзник синего
+
+        if (p2) {
+            let showMoney = (myTeam === 2 || gameState.isOffline);
+            let moneyText = showMoney ? p2.points : "???";
+            
+            t2Html += `<span style="color:${p2.color}">${p2.name}</span>: ${moneyText}💰`;
+            
+            if (p4) {
+                let p4Money = showMoney ? p4.points : "???";
+                t2Html += ` <span style="color:#aaa">|</span> <span style="color:${p4.color}">${p4.name}</span>: ${p4Money}💰`;
+            }
+        }
+        if (p2Label) p2Label.innerHTML = t2Html;
     }
 
     // 2. ИНДИКАТОР ХОДА
