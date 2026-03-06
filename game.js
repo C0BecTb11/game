@@ -10,91 +10,93 @@ window.onload = () => {
 };
 
 // === ОБНОВЛЕННАЯ ФУНКЦИЯ ЗАПУСКА ===
-function startGame(mapType, networkData = null) {
+// === БЛОК 1: ЗАПУСК ИГРЫ И НАСТРОЙКИ ===
+
+function startGame(mapConfig = { size: 80, mode: '1v1' }, networkData = null) {
     document.getElementById('main-menu').classList.add('hidden');
+    document.getElementById('create-game-modal').classList.add('hidden');
     document.getElementById('game-container').classList.remove('hidden');
 
-    // Получаем никнейм из системы авторизации
     let myName = window.currentUser ? window.currentUser.user_metadata.display_name : `Командир ${window.myPlayerId}`;
 
     if (networkData) {
-        // СНАЧАЛА применяем данные из сети (это автоматически обновит GRID_SIZE под размер карты)
+        // Подключение к существующей игре
         window.applyNetworkState(networkData.gameState, networkData.gameMap, networkData.capturePoints);
-        
-        // ТЕПЕРЬ выставляем камеру, зная правильные размеры карты
-        camera = { x: 0, y: 0, zoom: 1 };
-        if (window.isOnlineGame && window.myPlayerId === 2) {
-            camera.x = (GRID_SIZE * TILE_SIZE) - 600; 
-            camera.y = (GRID_SIZE * TILE_SIZE) - 600;
-        }
-
-        // Если зашел Игрок 2, обновляем его имя в базе
-        if (window.myPlayerId === 2 && gameState.players[2].name === 'Ожидание...') {
-            gameState.players[2].name = myName;
-            if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
-            updateUI();
-        }
     } 
     else {
-        // Создание новой игры Игроком 1
+        // === СОЗДАНИЕ НОВОЙ ИГРЫ ===
+        
+        // 1. Настройка игроков и команд
+        let playersConfig = {};
+        
+        if (mapConfig.mode === '1v1') {
+            playersConfig[1] = { team: 1, color: '#ff5555', name: myName, points: 100, faction: null };
+            playersConfig[2] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null };
+        } 
+        else if (mapConfig.mode === '2v2') {
+            playersConfig[1] = { team: 1, color: '#ff5555', name: myName, points: 100, faction: null }; // Красный
+            playersConfig[2] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null }; // Синий
+            playersConfig[3] = { team: 1, color: '#ff8888', name: 'Ожидание...', points: 100, faction: null }; // Розовый (союзник 1)
+            playersConfig[4] = { team: 2, color: '#8888ff', name: 'Ожидание...', points: 100, faction: null }; // Голубой (союзник 2)
+        }
+        else if (mapConfig.mode === '1v3') {
+            playersConfig[1] = { team: 1, color: '#ff5555', name: myName, points: 150, faction: null }; // Герой
+            playersConfig[2] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null };
+            playersConfig[3] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null };
+            playersConfig[4] = { team: 2, color: '#5555ff', name: 'Ожидание...', points: 100, faction: null };
+        }
+
         gameState = {
-            turn: 1, state: 'IDLE',
-            players: {
-                1: { points: 100, color: '#ff5555', name: myName, faction: null },
-                2: { points: 100, color: '#5555ff', name: 'Ожидание...', faction: null }
-            },
-            units: [], selectedUnit: null, unitToPlace: null, mines: [], stashes: [] // <--
+            turn: 1, 
+            state: 'IDLE',
+            config: mapConfig,
+            isOffline: !window.isOnlineGame, // Флаг для тестов
+            players: playersConfig,
+            units: [], selectedUnit: null, unitToPlace: null, mines: [], stashes: []
         };
         
-        generateMap(mapType);
-        
-        camera = { x: 0, y: 0, zoom: 1 };
-        if (window.isOnlineGame && window.myPlayerId === 2) {
-            camera.x = (GRID_SIZE * TILE_SIZE) - 600; 
-            camera.y = (GRID_SIZE * TILE_SIZE) - 600;
-        }
+        generateMap(mapConfig.size); // Генерируем карту нужного размера
+        setupCamera(); // Ставим камеру на базу
         
         if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
         updateUI();
         renderAll();
-                if (typeof checkFactionSelection === 'function') checkFactionSelection();
+        if (typeof checkFactionSelection === 'function') checkFactionSelection();
     }
 }
 
-// === ОБНОВЛЕННАЯ ФУНКЦИЯ СИНХРОНИЗАЦИИ ===
+function setupCamera() {
+    // Настраиваем камеру в зависимости от команды
+    let myTeam = 1;
+    if (gameState.players && gameState.players[window.myPlayerId]) {
+        myTeam = gameState.players[window.myPlayerId].team;
+    }
+    
+    camera = { x: 0, y: 0, zoom: 1 };
+    if (myTeam === 2) {
+        // Вторая команда смотрит с правого нижнего угла
+        camera.x = (GRID_SIZE * TILE_SIZE) - 600; 
+        camera.y = (GRID_SIZE * TILE_SIZE) - 600;
+    }
+}
+
 window.applyNetworkState = function(newState, newMap, newPoints) {
-    // 1. ИСПРАВЛЕНИЕ: Автоматически подстраиваем размер игры под загруженную карту
     if (newMap && newMap.length > 0) {
         GRID_SIZE = newMap.length; 
         TILE_SIZE = GRID_SIZE <= 15 ? 45 : 40; 
     }
 
-    // 2. БЕЗОПАСНОЕ Восстановление ссылок на объекты после JSON
     if (newMap) {
         newMap.forEach(row => {
-            if (row) {
-                row.forEach(cell => {
-                    if (cell && cell.type) {
-                        cell.type = Object.values(TILES).find(t => t.id === cell.type.id) || TILES.ROAD;
-                    }
-                });
-            }
+            if (row) row.forEach(cell => { if (cell && cell.type) cell.type = Object.values(TILES).find(t => t.id === cell.type.id) || TILES.ROAD; });
         });
     }
 
     if (newState && newState.units) {
         newState.units.forEach(u => {
             u.type = Object.values(UNIT_TYPES).find(t => t.id === u.type.id);
-            // Восстанавливаем пассажиров
-            if (u.cargo) {
-                u.cargo.forEach(passenger => {
-                    passenger.type = Object.values(UNIT_TYPES).find(t => t.id === passenger.type.id);
-                });
-            }
-            // Гарантируем, что у снабжения не пропадет объект груза при передаче по сети
-            if (u.type.id === 'supply' && !u.cargoRes) {
-                u.cargoRes = { medkits: 0, mines: 0, materials: 0 };
-            }
+            if (u.cargo) u.cargo.forEach(p => p.type = Object.values(UNIT_TYPES).find(t => t.id === p.type.id));
+            if (u.type.id === 'supply' && !u.cargoRes) u.cargoRes = { medkits: 0, mines: 0, materials: 0 };
         });
     }
 
@@ -104,13 +106,22 @@ window.applyNetworkState = function(newState, newMap, newPoints) {
     if (newMap) gameMap = newMap;
     if (newPoints) capturePoints = newPoints;
     
-    // Сбрасываем выделение, если сейчас не наш ход
+    // Обновляем имя, если это первый вход
+    let myName = window.currentUser ? window.currentUser.user_metadata.display_name : `Командир ${window.myPlayerId}`;
+    if (gameState.players[window.myPlayerId] && gameState.players[window.myPlayerId].name === 'Ожидание...') {
+        gameState.players[window.myPlayerId].name = myName;
+        if (window.sendTurnToDatabase && window.myPlayerId === gameState.turn) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
+    }
+
     if (gameState.turn !== window.myPlayerId) {
         gameState.selectedUnit = null;
         gameState.state = 'IDLE';
         gameState.unitToPlace = null;
     }
     
+    // Если камера еще в нуле (первый вход), настроим её
+    if (Math.abs(camera.x) < 1 && Math.abs(camera.y) < 1) setupCamera();
+
     updateUI();
     renderAll();
     if (typeof checkFactionSelection === 'function') checkFactionSelection();
@@ -668,10 +679,19 @@ function handleMapClick(e) {
 
 function isValidSpawn(x, y, playerID) {
     if (getUnitAt(x, y)) return false;
-    let radius = GRID_SIZE === 10 ? 1 : 4; 
-    if (playerID === 1) return x <= radius && y <= radius; 
-    if (playerID === 2) return x >= GRID_SIZE - (radius + 1) && y >= GRID_SIZE - (radius + 1);
-    return false;
+    
+    let radius = GRID_SIZE <= 50 ? 6 : 4; // На маленькой карте зона чуть больше
+    
+    // Смотрим не на ID игрока, а на его КОМАНДУ
+    let team = gameState.players[playerID] ? gameState.players[playerID].team : 1;
+
+    if (team === 1) {
+        // Команда 1: Левый верхний угол
+        return x <= radius && y <= radius;
+    } else {
+        // Команда 2: Правый нижний угол
+        return x >= GRID_SIZE - (radius + 1) && y >= GRID_SIZE - (radius + 1);
+    }
 }
 
 function getUnitAt(x, y) { return gameState.units.find(u => u.x === x && u.y === y); }
@@ -759,81 +779,54 @@ function moveUnit(unit, x, y) {
 }
 
 function attackUnit(attacker, target) {
-    let dist = Math.abs(attacker.x - target.x) + Math.abs(attacker.y - target.y);
-    
-    if (dist > attacker.type.attackRange) {
-        alert("Цель слишком далеко!");
-        return;
-    }
-    
-    if (!checkLineOfSight(attacker.x, attacker.y, target.x, target.y, attacker)) {
-        alert("Цель вне зоны видимости!");
+    // 1. ПРОВЕРКА НА СОЮЗНИКА (FRIENDLY FIRE)
+    let attackerTeam = gameState.players[attacker.owner].team;
+    let targetTeam = gameState.players[target.owner].team;
+
+    if (attackerTeam === targetTeam) {
+        alert("ОТСТАВИТЬ! Это союзник!");
         return;
     }
 
-    // === СТРОГИЕ ПРАВИЛА ПВО И АРТИЛЛЕРИИ ===
-    
-    // 1. Атакующий - ПВО (но проверяем, не универсал ли он)
+    let dist = Math.abs(attacker.x - target.x) + Math.abs(attacker.y - target.y);
+    if (dist > attacker.type.attackRange) { alert("Цель слишком далеко!"); return; }
+    if (!checkLineOfSight(attacker.x, attacker.y, target.x, target.y, attacker)) { alert("Цель вне зоны видимости!"); return; }
+
+    // === ПРАВИЛА ПВО И АРТИЛЛЕРИИ ===
     if (attacker.type.isAntiAir && !target.type.isAir) {
-        // ЕСЛИ у бойца нет бонуса по броне (обычный ПЗРК), то он не может бить землю.
-        // А ЕСЛИ есть (как у Синего RPG), то он может бить землю!
         if (!attacker.type.bonusArmorDamage) {
             alert("Этот юнит может стрелять ТОЛЬКО по воздушным целям!");
             return;
         }
     }
-
-    // 2. Цель - Воздух
-    if (target.type.isAir) {
-        // По воздуху бьют только ПВО, Авиация или Пехота (в некоторых случаях, если разрешим)
-        // В нашем случае: ПВО или Авиация.
-        if (!attacker.type.isAntiAir && !attacker.type.isAir) {
-            alert("По воздушным целям нужно спецсредство (ПВО или Авиация)!");
-            return;
-        }
+    if (target.type.isAir && !attacker.type.isAntiAir && !attacker.type.isAir && !attacker.type.isInfantry) {
+        alert("По воздушным целям нужно спецсредство (ПВО или Авиация)!");
+        return;
+    }
+    if (attacker.type.isArtillery) {
+        alert("Артиллерия бьет только по площади! Используйте спец-кнопку.");
+        return;
     }
 
-    // 1. Базовый урон
     let damage = attacker.type.attack;
-
-    // === 2. МЕХАНИКА БРОНИ ===
     if (target.type.isArmor) {
-        if (attacker.type.bonusArmorDamage) {
-            // Гранатометы и противотанковые орудия наносят огромный урон
-            damage = attacker.type.attack + attacker.type.bonusArmorDamage;
-        } else if (attacker.type.isInfantry) {
-            // Обычное стрелковое оружие (снайперы, пулеметы, пехота) только "царапает" краску
-            damage = 1;
-        }
+        if (attacker.type.bonusArmorDamage) damage = attacker.type.attack + attacker.type.bonusArmorDamage;
+        else if (attacker.type.isInfantry) damage = 1;
     }
 
-    // 3. Механика укрытия (если цель в здании или на заводе)
     let targetTile = gameMap[target.y][target.x].type;
     let inCover = false;
-    
-    // Броня слишком большая, чтобы прятаться в зданиях, поэтому укрытие работает только для пехоты
     if ((targetTile === TILES.BUILDING || targetTile === TILES.FACTORY) && !target.type.isArmor) {
-        damage = Math.max(1, damage - 2); // Укрытие поглощает 2 урона (но минимум 1 урон проходит)
+        damage = Math.max(1, damage - 2); 
         inCover = true;
     }
 
-    // 4. Наносим урон
     target.hp -= damage;
     attacker.hasMoved = true;
+    if (typeof showCombatNotification === 'function') showCombatNotification(damage, target.hp, target.type.name, inCover);
 
-    // Выводим красивое уведомление (цифра урона над головой)
-    if (typeof showCombatNotification === 'function') {
-        showCombatNotification(damage, target.hp, target.type.name, inCover);
-    }
-
-    // 5. Проверка на уничтожение
     if (target.hp <= 0) {
-        // Если уничтожили транспорт, в котором сидел десант — десант погибает вместе с машиной!
-        if (target.cargo && target.cargo.length > 0) {
-            alert(`💥 Вражеский ${target.type.name} уничтожен! Погиб экипаж и десант: ${target.cargo.length} чел.`);
-        }
-        
-        // Убираем убитого юнита с карты
+        if (target.cargo && target.cargo.length > 0) alert(`💥 Вражеский ${target.type.name} уничтожен! Погиб экипаж.`);
         gameState.units = gameState.units.filter(u => u !== target);
     }
 
@@ -843,97 +836,113 @@ function attackUnit(attacker, target) {
     renderAll();
 }
 
+// === БЛОК 3: ЗАВЕРШЕНИЕ ХОДА (С ПОДДЕРЖКОЙ ТЕСТОВ) ===
+
 function endTurn() {
     if (gameState.turn !== window.myPlayerId) return;
 
-    // === ПРОЦЕССИНГ АВТОПИЛОТА (ТЕПЕРЬ С УМНЫМ ПОИСКОМ ПУТИ) ===
+    // --- АВТОПИЛОТ ---
     gameState.units.forEach(u => {
         if (u.owner === gameState.turn && u.autopilotTarget && !u.hasMoved) {
-            
-            // Автопилот использует полноценный радар (BFS алгоритм)!
             let path = findPath(u, u.x, u.y, u.autopilotTarget.x, u.autopilotTarget.y);
-            
-            // path[0] — это текущая клетка. Смотрим, на сколько шагов хватит бензина (moveRange)
             let steps = Math.min(u.type.moveRange, path.length - 1);
-            
             if (steps > 0) {
-                let finalX = u.x;
-                let finalY = u.y;
-                let mineHit = null;
-
-                // Двигаемся по клеточкам и проверяем мины
+                let finalX = u.x, finalY = u.y, mineHit = null;
                 for (let i = 1; i <= steps; i++) {
-                    let nx = path[i].x;
-                    let ny = path[i].y;
-                    
-                    // Защита от ДТП: если это последняя клетка на этот ход, 
-                    // и там УЖЕ кто-то стоит (например, союзный танк), мы тормозим на клетку раньше!
-                    if (i === steps && getUnitAt(nx, ny)) {
-                        break; 
-                    }
-
-                    finalX = nx;
-                    finalY = ny;
+                    let nx = path[i].x, ny = path[i].y;
+                    if (i === steps && getUnitAt(nx, ny)) break; 
+                    finalX = nx; finalY = ny;
                     let mineIdx = gameState.mines.findIndex(m => m.x === finalX && m.y === finalY);
-                    if (mineIdx !== -1) {
-                        mineHit = gameState.mines[mineIdx];
-                        gameState.mines.splice(mineIdx, 1);
-                        break; // Взрыв останавливает движение!
-                    }
+                    if (mineIdx !== -1) { mineHit = gameState.mines[mineIdx]; gameState.mines.splice(mineIdx, 1); break; }
                 }
-
-                // --- ВОТ ЭТОТ КУСОК ТЫ СЛУЧАЙНО ПОТЕРЯЛ В СВОЕМ ВАРИАНТЕ ---
-                u.x = finalX;
-                u.y = finalY;
-                u.hasMoved = true;
-
-                // Если прибыли в точку назначения - отключаем автопилот
-                if (u.x === u.autopilotTarget.x && u.y === u.autopilotTarget.y) {
-                    u.autopilotTarget = null;
-                }
-
-                // Урон от мины
+                u.x = finalX; u.y = finalY; u.hasMoved = true;
+                if (u.x === u.autopilotTarget.x && u.y === u.autopilotTarget.y) u.autopilotTarget = null;
                 if (mineHit) {
                     u.hp -= mineHit.damage;
                     if(typeof showCombatNotification === 'function') showCombatNotification(mineHit.damage, u.hp, u.type.name, false);
                     if (u.hp <= 0) gameState.units = gameState.units.filter(unit => unit !== u);
                 }
-            } else {
-                // Если пути совсем нет (уперлись в непробиваемую пробку из танков)
-                u.autopilotTarget = null; 
-            }
+            } else u.autopilotTarget = null; 
         }
-    }); // --- КОНЕЦ КУСКА АВТОПИЛОТА ---
-                
-    // --- СТАНДАРТНАЯ ЛОГИКА ЗАВЕРШЕНИЯ ХОДА ---
+    }); 
+    // --- КОНЕЦ АВТОПИЛОТА ---
+
+    // 1. Умный захват точек (Свои не отбирают!)
     capturePoints.forEach(pt => {
         const occupier = getUnitAt(pt.x, pt.y);
-        if (occupier && occupier.type.canCapture) pt.owner = occupier.owner;
+        if (occupier && occupier.type.canCapture) {
+            let ptOwnerTeam = gameState.players[pt.owner] ? gameState.players[pt.owner].team : 0;
+            let occupierTeam = gameState.players[occupier.owner].team;
+            // Захватываем только если точка нейтральна или принадлежит ВРАГУ
+            if (ptOwnerTeam !== occupierTeam) {
+                pt.owner = occupier.owner;
+            }
+        }
     });
     
+    // 2. Доход
     let income = 20;
     capturePoints.forEach(pt => { if (pt.owner === gameState.turn) income += 15; });
     gameState.players[gameState.turn].points += income;
     
-    gameState.turn = gameState.turn === 1 ? 2 : 1;
+    // 3. Сброс кулдаунов
+    gameState.units.forEach(u => { 
+        if (u.owner === gameState.turn) {
+            u.hasMoved = false; 
+            if (u.cooldown > 0) u.cooldown--; 
+        }
+    });
+
+    // 4. Передача хода (Циклическая: 1->2->3->4->1)
+    let totalPlayers = Object.keys(gameState.players).length;
+    let nextTurn = gameState.turn + 1;
+    if (nextTurn > totalPlayers) nextTurn = 1;
+    
+    gameState.turn = nextTurn;
+    
     gameState.selectedUnit = null;
     gameState.state = 'IDLE';
     gameState.unitToPlace = null;
     
-    gameState.units.forEach(u => { 
-        if (u.owner === window.myPlayerId) {
-            u.hasMoved = false; 
-            // Кулдаун артиллерии уменьшается каждый наш ход
-            if (u.cooldown > 0) u.cooldown--; 
-        }
-    });
-    
     const notif = document.getElementById('combat-notification');
     if(notif) notif.classList.add('hidden');
     
+    // === ЛОГИКА ДЛЯ ТЕСТОВ (HOTSEAT) ===
+    if (gameState.isOffline) {
+        // Переключаем управление на следующего игрока
+        window.myPlayerId = gameState.turn;
+        
+        // Показываем визуальное уведомление
+        let pName = gameState.players[gameState.turn].name;
+        let pColor = gameState.players[gameState.turn].color;
+        
+        let banner = document.createElement('div');
+        banner.innerText = `ХОД: ${pName}`;
+        banner.style.cssText = `position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); 
+            background:rgba(0,0,0,0.9); color:${pColor}; padding:20px 40px; font-size:2rem; 
+            font-weight:bold; border:3px solid ${pColor}; border-radius:10px; z-index:10000;`;
+        document.body.appendChild(banner);
+        setTimeout(() => banner.remove(), 1200);
+
+        setupCamera(); // Передвигаем камеру к базе активного игрока
+        
+        // Автоматически применяем настройки фракции для нового игрока
+        if (typeof checkFactionSelection === 'function') {
+             // Сначала сбрасываем старую фракцию в UI, если она еще не выбрана ботом
+             if(!gameState.players[window.myPlayerId].faction) {
+                 // Для ботов можно авто-выбирать, но пока оставим ручной выбор для теста
+                 document.getElementById('faction-selection-screen').classList.remove('hidden');
+             } else {
+                 applyFactionSettings();
+             }
+        }
+    }
+
     updateUI();
     renderAll();
-    if (window.sendTurnToDatabase) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
+    
+    // Отправляем на сервер только если это Онлайн игра
+    if (window.sendTurnToDatabase && !gameState.isOffline) window.sendTurnToDatabase(gameState, gameMap, capturePoints);
 }
 
 // === УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ МАГАЗИНА ===
