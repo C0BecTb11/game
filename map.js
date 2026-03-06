@@ -223,10 +223,21 @@ function drawMap() {
             let tile = gameMap[y][x];
             ctx.fillStyle = tile.type.color;
             
+            // === ОТРИСОВКА ТОЧЕК (ОБНОВЛЕНО) ===
             if (tile.type === TILES.POINT) {
                 let point = capturePoints.find(p => p.x === x && p.y === y);
-                if (point && point.owner === 1) ctx.fillStyle = '#8B0000';
-                if (point && point.owner === 2) ctx.fillStyle = '#00008B';
+                
+                // Если точка захвачена
+                if (point && point.owner && typeof gameState !== 'undefined' && gameState.players[point.owner]) {
+                    let team = gameState.players[point.owner].team;
+                    
+                    // Красим в цвет КОМАНДЫ
+                    if (team === 1) ctx.fillStyle = '#8B0000'; // Красный (для игроков 1 и 3)
+                    else if (team === 2) ctx.fillStyle = '#00008B'; // Синий (для игроков 2 и 4)
+                } 
+                // Старый фоллбэк (на всякий случай)
+                else if (point && point.owner === 1) ctx.fillStyle = '#8B0000';
+                else if (point && point.owner === 2) ctx.fillStyle = '#00008B';
             }
             
             ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -251,6 +262,7 @@ function drawMap() {
         }
     }
     
+    // Рисуем зоны высадки (динамически под размер карты)
     drawSpawnZone(0, 0, 'rgba(255, 85, 85, 0.2)');
     drawSpawnZone(GRID_SIZE - 1, GRID_SIZE - 1, 'rgba(85, 85, 255, 0.2)');
 }
