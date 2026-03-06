@@ -298,22 +298,34 @@ function checkLineOfSight(x0, y0, x1, y1, unit = null) {
     return true;
 }
 
+// === ОБНОВЛЕННАЯ СИСТЕМА ОБЗОРА (ОБЩАЯ ВИДИМОСТЬ КОМАНДЫ) ===
 function getVisibleMap() {
     let vis = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(false));
     let spawnZone = GRID_SIZE === 10 ? 1 : 4;
-    let viewPlayer = window.myPlayerId;
     
-    // 1. Зона видимости вокруг спавна
+    // Определяем нашу команду (1 или 2)
+    let myTeam = 1;
+    if (gameState.players && gameState.players[window.myPlayerId]) {
+        myTeam = gameState.players[window.myPlayerId].team;
+    }
+    
+    // 1. Зона видимости вокруг БАЗЫ КОМАНДЫ
+    // Если мы Красные (Team 1) - видим верхний левый угол
+    // Если мы Синие (Team 2) - видим нижний правый угол
     for(let y=0; y<GRID_SIZE; y++){
         for(let x=0; x<GRID_SIZE; x++){
-            if (viewPlayer === 1 && x <= spawnZone+2 && y <= spawnZone+2) vis[y][x] = true;
-            if (viewPlayer === 2 && x >= GRID_SIZE - (spawnZone+3) && y >= GRID_SIZE - (spawnZone+3)) vis[y][x] = true;
+            if (myTeam === 1 && x <= spawnZone+2 && y <= spawnZone+2) vis[y][x] = true;
+            if (myTeam === 2 && x >= GRID_SIZE - (spawnZone+3) && y >= GRID_SIZE - (spawnZone+3)) vis[y][x] = true;
         }
     }
     
-    // 2. Видимость от каждого юнита
+    // 2. Видимость от ВСЕХ ЮНИТОВ КОМАНДЫ (Свои + Союзники)
     gameState.units.forEach(u => {
-        if (u.owner === viewPlayer) {
+        // Узнаем команду владельца этого юнита
+        let uTeam = gameState.players[u.owner] ? gameState.players[u.owner].team : -1;
+        
+        // Если юнит принадлежит НАШЕЙ команде (мой или союзника) — он дает нам обзор!
+        if (uTeam === myTeam) {
             let v = u.type.visionRange;
             
             for(let dy = -v; dy <= v; dy++){
@@ -322,8 +334,7 @@ function getVisibleMap() {
                     if(nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
                         if(Math.abs(dx) + Math.abs(dy) <= v) {
                             
-                            // Вот здесь вся магия 3 шага!
-                            // Мы убрали лишние проверки и просто передаем сам юнит (u) пятым параметром
+                            // Проверяем линию обзора от лица этого юнита
                             if (checkLineOfSight(u.x, u.y, nx, ny, u)) {
                                 vis[ny][nx] = true;
                             }
@@ -335,9 +346,12 @@ function getVisibleMap() {
         }
     });
     
-    // 3. Видимость вокруг захваченных точек
+    // 3. Видимость вокруг ЗАХВАЧЕННЫХ ТОЧЕК КОМАНДЫ
     capturePoints.forEach(pt => {
-        if (pt.owner === viewPlayer) {
+        let ptOwnerTeam = gameState.players[pt.owner] ? gameState.players[pt.owner].team : -1;
+        
+        // Если точку захватил наш союзник — мы тоже видим территорию вокруг
+        if (ptOwnerTeam === myTeam) {
             for(let dy = -1; dy <= 1; dy++){
                 for(let dx = -1; dx <= 1; dx++){
                     let nx = pt.x + dx, ny = pt.y + dy;
@@ -346,6 +360,7 @@ function getVisibleMap() {
             }
         }
     });
+    
     return vis;
 }
 
