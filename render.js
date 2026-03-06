@@ -2,38 +2,63 @@
 // Этот файл отвечает ТОЛЬКО за отрисовку графики и обновление интерфейса (UI)
 
 function updateUI() {
-    // --- ТУМАН ВОЙНЫ ДЛЯ ЭКОНОМИКИ ---
-    if (window.myPlayerId === 1) {
-        document.getElementById('p1-points').innerText = gameState.players[1].points;
-        document.getElementById('p2-points').innerText = "???";
-    } else if (window.myPlayerId === 2) {
-        document.getElementById('p1-points').innerText = "???";
-        document.getElementById('p2-points').innerText = gameState.players[2].points;
-    } else {
-        // На случай, если кто-то смотрит игру как зритель
-        document.getElementById('p1-points').innerText = gameState.players[1].points;
-        document.getElementById('p2-points').innerText = gameState.players[2].points;
-    }
-
+    // 1. ТУМАН ВОЙНЫ ДЛЯ ЭКОНОМИКИ
+    // Показываем очки игрока 1 и 2 (лидеров команд)
+    // Если мы в команде 1, видим очки P1. Если в команде 2 - P2.
+    
     const p1NameElem = document.getElementById('p1-name');
     const p2NameElem = document.getElementById('p2-name');
-    if (p1NameElem && gameState.players[1].name) p1NameElem.innerText = gameState.players[1].name;
-    if (p2NameElem && gameState.players[2].name) p2NameElem.innerText = gameState.players[2].name;
-
-    const turnInd = document.getElementById('turn-indicator');
     
-    if (gameState.turn === window.myPlayerId) {
-        turnInd.innerText = "ВАШ ХОД";
-        turnInd.className = window.myPlayerId === 1 ? 'turn-p1' : 'turn-p2';
-        turnInd.style.border = '';
-        turnInd.style.color = '';
-    } else {
-        turnInd.innerText = "ХОД ПРОТИВНИКА...";
-        turnInd.className = '';
-        turnInd.style.border = '1px solid #777';
-        turnInd.style.color = '#777';
+    // Проверяем, есть ли игроки (на случай ошибок инициализации)
+    if (gameState.players && gameState.players[1]) {
+        if (p1NameElem) p1NameElem.innerText = gameState.players[1].name;
+        
+        let myTeam = gameState.players[window.myPlayerId]?.team;
+        let p1Team = gameState.players[1].team;
+        
+        // Видим очки P1, только если мы в одной команде или это офлайн-тест
+        if (myTeam === p1Team || gameState.isOffline) {
+            document.getElementById('p1-points').innerText = gameState.players[1].points;
+        } else {
+            document.getElementById('p1-points').innerText = "???";
+        }
     }
 
+    if (gameState.players && gameState.players[2]) {
+        if (p2NameElem) p2NameElem.innerText = gameState.players[2].name;
+        
+        let myTeam = gameState.players[window.myPlayerId]?.team;
+        let p2Team = gameState.players[2].team;
+        
+        if (myTeam === p2Team || gameState.isOffline) {
+            document.getElementById('p2-points').innerText = gameState.players[2].points;
+        } else {
+            document.getElementById('p2-points').innerText = "???";
+        }
+    }
+
+    // 2. ИНДИКАТОР ХОДА
+    const turnInd = document.getElementById('turn-indicator');
+    if (turnInd && gameState.players[gameState.turn]) {
+        let turnPlayer = gameState.players[gameState.turn];
+        
+        if (gameState.turn === window.myPlayerId) {
+            turnInd.innerText = "ВАШ ХОД";
+            // Цвет рамки зависит от команды текущего игрока
+            let colorClass = turnPlayer.team === 1 ? 'turn-p1' : 'turn-p2';
+            turnInd.className = colorClass;
+            turnInd.style.border = '';
+            turnInd.style.color = '';
+        } else {
+            turnInd.innerText = `ХОД: ${turnPlayer.name}`;
+            turnInd.className = '';
+            // Красим текст в цвет того, кто сейчас ходит (чтобы видеть, чей ход в режиме 2v2)
+            turnInd.style.border = `1px solid ${turnPlayer.color}`;
+            turnInd.style.color = turnPlayer.color;
+        }
+    }
+
+    // 3. ПАНЕЛЬ ИНФОРМАЦИИ О ЮНИТЕ
     const panel = document.getElementById('unit-info');
     if (panel) {
         if (gameState.selectedUnit) {
@@ -88,7 +113,7 @@ function updateUI() {
                 }
             }
 
-            // --- ПРОВЕРКА ВОЗМОЖНОСТИ ПОПОЛНЕНИЯ ЗАПАСОВ ---
+            // --- КНОПКА ПОПОЛНЕНИЯ ЗАПАСОВ ---
             const btnResupply = document.getElementById('btn-resupply');
             if (btnResupply) {
                 let canResupply = false;
@@ -130,11 +155,16 @@ function updateUI() {
                 }
             }
             
+            // --- СЧЕТЧИК УГРОЗ (КТО ЦЕЛИТСЯ В МЕНЯ) ---
             let threats = 0;
             if (u.owner === window.myPlayerId) {
                 let visibleMap = getVisibleMap();
+                let myTeam = gameState.players[window.myPlayerId].team;
+
                 gameState.units.forEach(enemy => {
-                    if (enemy.owner !== window.myPlayerId && visibleMap[enemy.y][enemy.x]) {
+                    let enemyTeam = gameState.players[enemy.owner].team;
+                    // Считаем угрозой только ВРАГОВ, которые нас видят
+                    if (enemyTeam !== myTeam && visibleMap[enemy.y][enemy.x]) {
                         let dist = Math.abs(enemy.x - u.x) + Math.abs(enemy.y - u.y);
                         if (dist <= enemy.type.attackRange && checkLineOfSight(enemy.x, enemy.y, u.x, u.y, enemy)) {
                             threats++;
@@ -153,11 +183,10 @@ function updateUI() {
                 }
             }
 
-                        // --- ЛОГИКА ОТОБРАЖЕНИЯ ДЕСАНТА (Только для своих!) ---
+            // --- ДЕСАНТ ---
             const cargoContainer = document.getElementById('ui-cargo-container');
             const cargoList = document.getElementById('ui-cargo-list');
             if (cargoContainer && cargoList) {
-                // Добавлена проверка: u.owner === window.myPlayerId
                 if (u.type.transportCapacity && u.owner === window.myPlayerId) {
                     cargoContainer.classList.remove('hidden');
                     cargoList.innerHTML = '';
@@ -176,15 +205,13 @@ function updateUI() {
                         }
                     }
                 } else {
-                    // Если это вражеский транспорт - скрываем блок полностью
                     cargoContainer.classList.add('hidden');
                 }
             }
 
-            // --- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА СНАБЖЕНИЯ (Только для своих!) ---
+            // --- СНАБЖЕНИЕ ---
             const supplyContainer = document.getElementById('ui-supply-container');
             if (supplyContainer) {
-                // Добавлена проверка: u.owner === window.myPlayerId
                 if (u.type.id === 'supply' && u.owner === window.myPlayerId) {
                     supplyContainer.classList.remove('hidden');
                     
@@ -197,10 +224,14 @@ function updateUI() {
                     document.getElementById('sup-mat').innerText = u.cargoRes.materials;
                     
                     const baseControls = document.getElementById('sup-base-controls');
+                    // База зависит от команды!
                     let radius = GRID_SIZE <= 15 ? 1 : 4; 
+                    let team = gameState.players[window.myPlayerId].team;
                     let isAtBase = false;
-                    if (window.myPlayerId === 1 && u.x <= radius && u.y <= radius) isAtBase = true;
-                    if (window.myPlayerId === 2 && u.x >= GRID_SIZE - (radius + 1) && u.y >= GRID_SIZE - (radius + 1)) isAtBase = true;
+                    
+                    // Команда 1 - верхний левый, Команда 2 - нижний правый
+                    if (team === 1 && u.x <= radius && u.y <= radius) isAtBase = true;
+                    if (team === 2 && u.x >= GRID_SIZE - (radius + 1) && u.y >= GRID_SIZE - (radius + 1)) isAtBase = true;
                     
                     if (isAtBase) {
                         baseControls.classList.remove('hidden');
@@ -208,7 +239,6 @@ function updateUI() {
                         baseControls.classList.add('hidden');
                     }
                     
-                    // Управление Складом
                     const btnCreateStash = document.getElementById('btn-create-stash');
                     const stashControls = document.getElementById('sup-stash-controls');
                     
@@ -239,18 +269,16 @@ function updateUI() {
                         }
                     }
                 } else {
-                    // Если это вражеский грузовик - скрываем его инвентарь
                     supplyContainer.classList.add('hidden');
                 }
             }
             
-            // --- УНИВЕРСАЛЬНЫЙ АВТОПИЛОТ ДЛЯ ВСЕХ ЮНИТОВ ---
+            // --- АВТОПИЛОТ ---
             const autoControls = document.getElementById('sup-auto-controls');
             const btnSetRoute = document.getElementById('btn-set-route');
             const btnCancelRoute = document.getElementById('btn-cancel-route');
 
             if (autoControls && btnSetRoute && btnCancelRoute) {
-                // Показываем кнопку автопилота только для СВОИХ юнитов
                 if (u.owner === window.myPlayerId) {
                     autoControls.classList.remove('hidden');
                     if (u.autopilotTarget) {
@@ -272,7 +300,7 @@ function updateUI() {
                 }
             }
 
-            // --- ОБНОВЛЕНИЕ КНОПОК АРТИЛЛЕРИИ ---
+            // --- АРТИЛЛЕРИЯ ---
             const artControls = document.getElementById('artillery-controls');
             const btnArtFire = document.getElementById('btn-artillery-fire');
             const artCdText = document.getElementById('art-cooldown-text');
@@ -294,7 +322,6 @@ function updateUI() {
                         btnArtFire.classList.remove('hidden');
                         artCdText.classList.add('hidden');
                         
-                        // Логика переключения кнопки
                         if (gameState.state === 'ARTILLERY_AIMING') {
                             if (gameState.artTarget) {
                                 btnArtFire.innerText = "🔥 ОТКРЫТЬ ОГОНЬ!";
@@ -315,7 +342,6 @@ function updateUI() {
                     artControls.classList.add('hidden');
                 }
             }
-
             
             panel.classList.remove('hidden');
         } else {
@@ -369,6 +395,7 @@ function renderAll() {
     let visibleMap = getVisibleMap();
     let viewPlayer = window.myPlayerId;
 
+    // Отрисовка тумана войны
     for (let y = 0; y < GRID_SIZE; y++) {
         for (let x = 0; x < GRID_SIZE; x++) {
             if (!visibleMap[y][x]) {
@@ -378,8 +405,10 @@ function renderAll() {
         }
     }
 
+    // Мины
     if (gameState.mines) {
         gameState.mines.forEach(m => {
+            // Видим только СВОИ мины
             if (m.owner === viewPlayer) {
                 ctx.fillStyle = '#ffaa00';
                 ctx.beginPath();
@@ -389,10 +418,15 @@ function renderAll() {
                 ctx.beginPath();
                 ctx.arc(m.x * TILE_SIZE + TILE_SIZE / 2, m.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 8, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(m.x * TILE_SIZE + TILE_SIZE / 2, m.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 8, 0, Math.PI * 2);
+                ctx.fill();
             }
         });
     }
 
+    // Подсветка установки мины
     if (gameState.state === 'PLACING_MINE' && gameState.selectedUnit) {
         for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
@@ -407,7 +441,7 @@ function renderAll() {
         }
     }
 
-    // --- ОТРИСОВКА СКЛАДОВ ---
+    // Склады
     if (gameState.stashes) {
         gameState.stashes.forEach(s => {
             if (visibleMap[s.y][s.x]) {
@@ -424,7 +458,7 @@ function renderAll() {
         });
     }
 
-    // --- ПОДСВЕТКА ЗОНЫ СОЗДАНИЯ СКЛАДА ---
+    // Подсветка установки склада
     if (gameState.state === 'PLACING_STASH' && gameState.selectedUnit) {
         for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
@@ -438,14 +472,13 @@ function renderAll() {
         }
     }
 
-        // --- ПОДСВЕТКА ЗОНЫ ВЫСАДКИ ДЕСАНТА ---
+    // Подсветка высадки
     if (gameState.state === 'DROPPING_CARGO' && gameState.selectedUnit) {
         for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
                 if (dx === 0 && dy === 0) continue;
                 let nx = gameState.selectedUnit.x + dx;
                 let ny = gameState.selectedUnit.y + dy;
-                // Рисуем зеленую зону на свободных клетках
                 if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && !getUnitAt(nx, ny)) {
                     ctx.fillStyle = 'rgba(46, 125, 50, 0.5)'; 
                     ctx.fillRect(nx * TILE_SIZE, ny * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -454,18 +487,17 @@ function renderAll() {
         }
     }
 
-    // --- ПОДСВЕТКА ВЫБОРА МАРШРУТА ---
+    // Маршрут
     if (gameState.state === 'SETTING_ROUTE' && gameState.selectedUnit) {
         ctx.fillStyle = 'rgba(25, 118, 210, 0.2)'; 
         ctx.fillRect(0, 0, GRID_SIZE * TILE_SIZE, GRID_SIZE * TILE_SIZE); 
     }
 
-    // --- ПОДСВЕТКА АРТИЛЛЕРИЙСКОГО ПРИЦЕЛА (Квадрат 4x4 или 2x2) ---
+    // Артиллерия
     if (gameState.state === 'ARTILLERY_AIMING' && gameState.selectedUnit) {
         let u = gameState.selectedUnit;
         let area = u.type.artArea;
         
-        // 1. Тусклая оранжевая подсветка дальности стрельбы
         ctx.fillStyle = 'rgba(255, 87, 34, 0.15)'; 
         for (let ty = 0; ty < GRID_SIZE; ty++) {
             for (let tx = 0; tx < GRID_SIZE; tx++) {
@@ -476,12 +508,12 @@ function renderAll() {
             }
         }
         
-        // 2. Отрисовка зафиксированного квадрата прицела
+        // Красный квадрат прицела
         if (gameState.artTarget) {
             let startX = gameState.artTarget.x - Math.floor(area / 2);
             let startY = gameState.artTarget.y - Math.floor(area / 2);
             
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.4)'; // Красная зона поражения
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.4)'; 
             ctx.strokeStyle = '#ff0000';
             ctx.lineWidth = 2;
             
@@ -500,10 +532,10 @@ function renderAll() {
         
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 20px sans-serif';
-        ctx.fillText(`Выберите клетку для удара! Разброс: ${area}x${area}`, camera.x + canvas.width/2 - 150, camera.y + 50);
+        ctx.fillText(`Наведи на цель! Разброс: ${area}x${area}`, camera.x + canvas.width/2 - 150, camera.y + 50);
     }
 
-    // --- ОТРИСОВКА ЛИНИИ АВТОПИЛОТА (ИСКЛЮЧИТЕЛЬНО ДЛЯ СВОИХ ЮНИТОВ) ---
+    // Линия автопилота
     if (gameState.selectedUnit && gameState.selectedUnit.autopilotTarget && gameState.selectedUnit.owner === viewPlayer) {
         ctx.beginPath();
         ctx.moveTo(gameState.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2);
@@ -518,33 +550,38 @@ function renderAll() {
         ctx.fillRect(gameState.selectedUnit.autopilotTarget.x * TILE_SIZE + TILE_SIZE/2 - 6, gameState.selectedUnit.autopilotTarget.y * TILE_SIZE + TILE_SIZE/2 - 6, 12, 12);
     }
     
-    // --- ПОДСВЕТКА ЗОН ХОДА И АТАКИ ---
+    // Подсветка зон при выделении
     if (gameState.selectedUnit && !gameState.selectedUnit.hasMoved && gameState.state !== 'PLACING_MINE' && gameState.state !== 'SETTING_ROUTE') {
         let reachable = getReachableCells(gameState.selectedUnit);
         
-        // Зона хода (синяя) - рисуем для всех, чтобы игрок мог просчитать радиус врага
+        // Зона хода (синяя)
         ctx.fillStyle = 'rgba(0, 200, 255, 0.3)';
         reachable.forEach(cell => {
             ctx.fillRect(cell.x * TILE_SIZE, cell.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         });
 
-        // Красные клетки (Кто в радиусе поражения выделенного юнита)
+        // Красные клетки (Враги в радиусе атаки)
+        let myTeam = gameState.players[gameState.selectedUnit.owner].team;
+
         for (let ty = 0; ty < GRID_SIZE; ty++) {
             for (let tx = 0; tx < GRID_SIZE; tx++) {
                 let dist = Math.abs(gameState.selectedUnit.x - tx) + Math.abs(gameState.selectedUnit.y - ty);
                 let unitOnTile = getUnitAt(tx, ty);
                 
-                // ИСПРАВЛЕНИЕ: Цель должна быть врагом ВЫДЕЛЕННОГО юнита (а не игрока, чей сейчас ход)
-                if (dist <= gameState.selectedUnit.type.attackRange && unitOnTile && unitOnTile.owner !== gameState.selectedUnit.owner && visibleMap[ty][tx]) {
-                    if (checkLineOfSight(gameState.selectedUnit.x, gameState.selectedUnit.y, tx, ty, gameState.selectedUnit)) {
-                        ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
-                        ctx.fillRect(tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                if (dist <= gameState.selectedUnit.type.attackRange && unitOnTile && visibleMap[ty][tx]) {
+                    // Подсвечиваем красным только если это ВРАЖЕСКАЯ команда
+                    let unitTeam = gameState.players[unitOnTile.owner].team;
+                    if (unitTeam !== myTeam) {
+                        if (checkLineOfSight(gameState.selectedUnit.x, gameState.selectedUnit.y, tx, ty, gameState.selectedUnit)) {
+                            ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                            ctx.fillRect(tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        }
                     }
                 }
             }
         }
 
-        // Подсветка лечения медика (только если медик НАШ)
+        // Подсветка лечения
         if (gameState.selectedUnit.type.id === 'medic' && gameState.selectedUnit.medkits > 0 && gameState.selectedUnit.owner === viewPlayer) {
             gameState.units.forEach(u => {
                 if (u.owner === gameState.turn && u.type.isInfantry && u.hp < u.type.maxHp && u !== gameState.selectedUnit) {
@@ -558,6 +595,7 @@ function renderAll() {
         }
     }
 
+    // ВЫДЕЛЕНИЕ ЮНИТА
     if (gameState.selectedUnit) {
         ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
         ctx.fillRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -566,39 +604,41 @@ function renderAll() {
         ctx.strokeRect(gameState.selectedUnit.x * TILE_SIZE, gameState.selectedUnit.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         ctx.lineWidth = 1;
 
-        // --- ЛАЗЕРНЫЕ ПРИЦЕЛЫ (Только от врагов!) ---
+        // --- ЛАЗЕРНЫЕ ПРИЦЕЛЫ (УМНЫЕ) ---
+        // Показываем линию, только если ВРАГ целится в НАС (или союзника)
+        // Если мы выделили союзника, красная линия на нас рисоваться не должна!
+        
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 5]); 
         
         let myTeam = gameState.players[window.myPlayerId] ? gameState.players[window.myPlayerId].team : 0;
 
         gameState.units.forEach(targetUnit => {
-            // Рисуем линию, только если:
-            // 1. Цель принадлежит ИГРОКУ (или его союзнику)
-            // 2. Атакующий принадлежит ВРАЖЕСКОЙ команде
-            
-            let targetOwnerTeam = gameState.players[targetUnit.owner].team;
-            let attackerTeam = gameState.players[gameState.selectedUnit.owner].team;
+            if (visibleMap[targetUnit.y][targetUnit.x]) {
+                let attacker = gameState.selectedUnit; // Тот, кто сейчас выделен (и теоретически стреляет)
+                let attackerTeam = gameState.players[attacker.owner].team;
+                let targetTeam = gameState.players[targetUnit.owner].team;
 
-            // Если выделен враг, и он целится в кого-то из НАШЕЙ команды
-            if (attackerTeam !== myTeam && targetOwnerTeam === myTeam && visibleMap[targetUnit.y][targetUnit.x]) {
-                
-                let dist = Math.abs(targetUnit.x - gameState.selectedUnit.x) + Math.abs(targetUnit.y - gameState.selectedUnit.y);
-                
-                if (dist <= gameState.selectedUnit.type.attackRange && checkLineOfSight(targetUnit.x, targetUnit.y, gameState.selectedUnit.x, gameState.selectedUnit.y, gameState.selectedUnit)) {
-                    ctx.beginPath();
-                    ctx.moveTo(targetUnit.x * TILE_SIZE + TILE_SIZE / 2, targetUnit.y * TILE_SIZE + TILE_SIZE / 2);
-                    ctx.lineTo(gameState.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2, gameState.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2);
-                    ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)';
-                    ctx.stroke();
+                // Рисуем линию ТОЛЬКО если Атакующий - ВРАГ для меня, а Цель - это Я или мой СОЮЗНИК
+                if (attackerTeam !== myTeam && targetTeam === myTeam) {
+                    
+                    let dist = Math.abs(targetUnit.x - attacker.x) + Math.abs(targetUnit.y - attacker.y);
+                    
+                    if (dist <= attacker.type.attackRange && checkLineOfSight(targetUnit.x, targetUnit.y, attacker.x, attacker.y, attacker)) {
+                        ctx.beginPath();
+                        ctx.moveTo(targetUnit.x * TILE_SIZE + TILE_SIZE / 2, targetUnit.y * TILE_SIZE + TILE_SIZE / 2);
+                        ctx.lineTo(attacker.x * TILE_SIZE + TILE_SIZE / 2, attacker.y * TILE_SIZE + TILE_SIZE / 2);
+                        ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)'; // Зловещий красный цвет
+                        ctx.stroke();
+                    }
                 }
             }
         });
         ctx.setLineDash([]); 
         ctx.lineWidth = 1;
-
     }
 
+    // ОТРИСОВКА ЮНИТОВ
     gameState.units.forEach(u => {
         if (u.owner !== viewPlayer && !visibleMap[u.y][u.x]) return;
 
@@ -617,15 +657,18 @@ function renderAll() {
             ctx.fillText(u.type.name.charAt(0), u.x * TILE_SIZE + TILE_SIZE/2, u.y * TILE_SIZE + TILE_SIZE/2);
         }
 
+        // Полоска ХП
         ctx.fillStyle = '#cc0000';
         ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 10, TILE_SIZE - 8, 5);
         ctx.fillStyle = '#00cc00';
         let hpWidth = Math.max(0, (u.hp / u.type.maxHp) * (TILE_SIZE - 8));
         ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 10, hpWidth, 5);
         
+        // Индикатор владельца (цвет игрока)
         ctx.fillStyle = gameState.players[u.owner].color;
         ctx.fillRect(u.x * TILE_SIZE + 4, u.y * TILE_SIZE + TILE_SIZE - 16, 10, 5);
 
+        // Затемнение, если походил
         if (u.hasMoved) {
             ctx.fillStyle = 'rgba(0,0,0,0.6)';
             ctx.fillRect(u.x * TILE_SIZE, u.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -633,4 +676,4 @@ function renderAll() {
     });
 
     ctx.restore(); 
-}
+                   }
