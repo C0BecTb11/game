@@ -475,3 +475,100 @@ button:active { background-color: #666; }
     background-color: #1a252f;
     transform: none; /* Убираем прыжок кнопки при клике */
 }
+
+/* === СТИЛИ ЭНЦИКЛОПЕДИИ (ENCYCLOPEDIA.JS) === */
+
+.help-modal-size {
+    max-width: 850px;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #1a1a1a;
+}
+
+/* Вкладки */
+.tabs {
+    display: flex;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #444;
+}
+
+.tab-link {
+    background-color: #2a2a2a;
+    color: #888;
+    border: none;
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    flex: 1;
+    transition: 0.2s;
+    border-radius: 5px 5px 0 0;
+}
+
+.tab-link:hover { background-color: #333; color: white; }
+
+.tab-link.active {
+    background-color: #444;
+    color: #ffaa00;
+    border-bottom: 3px solid #ffaa00;
+    font-weight: bold;
+}
+
+/* Контент */
+.tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 5px 10px;
+}
+.tab-content.hidden { display: none; }
+.tab-content.active { display: block; }
+
+/* Таблица */
+.table-scroll { overflow-x: auto; }
+
+.unit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.unit-table th {
+    background-color: #333;
+    color: #ffaa00;
+    padding: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border: 1px solid #555;
+}
+
+.unit-table td {
+    padding: 8px;
+    border: 1px solid #444;
+    text-align: center;
+    color: #ddd;
+}
+
+.unit-table tr:nth-child(even) { background-color: #222; }
+.unit-table tr:hover { background-color: #333; }
+
+.row-header td {
+    background-color: #2e7d32;
+    color: white;
+    font-weight: bold;
+    text-align: left;
+    padding-left: 15px;
+    text-transform: uppercase;
+}
+
+/* Текст правил */
+.help-section h3 {
+    color: #64b5f6;
+    border-bottom: 1px dashed #555;
+    padding-bottom: 5px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+.help-section ul { padding-left: 20px; color: #ccc; line-height: 1.5; }
+.help-section li { margin-bottom: 8px; }
+.help-section b { color: #fff; }
