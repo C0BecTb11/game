@@ -91,11 +91,11 @@ const UNIT_TYPES = {
     // ВНИМАНИЕ: ID изменены на дефисы (u-soldier), чтобы совпадать с HTML!
 
     U_SOLDIER: { 
-        id: 'u-soldier', name: "Солдат (U)", imgSrc: "./images/team-u-soldier.png", 
+        id: 'u-soldier', name: "Солдат", imgSrc: "./images/team-u-soldier.png", 
         cost: 20, maxHp: 10, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true, isInfantry: true 
     },
     U_RPK: { 
-        id: 'u-rpk', name: "Пулеметчик (U)", imgSrc: "./images/team-u-rpk.png", 
+        id: 'u-rpk', name: "Пулеметчик", imgSrc: "./images/team-u-rpk.png", 
         cost: 50, maxHp: 15, attack: 5, attackRange: 4, moveRange: 3, visionRange: 5, canCapture: true, isInfantry: true 
     },
     U_GRENADER: { 
@@ -108,12 +108,12 @@ const UNIT_TYPES = {
         isInfantry: true, bonusArmorDamage: 13, isAntiAir: true 
     },
     U_MEDIC: { 
-        id: 'u-medic', name: "Медик (U)", imgSrc: "./images/team-u-medic.png", 
+        id: 'u-medic', name: "Медик", imgSrc: "./images/team-u-medic.png", 
         cost: 70, maxHp: 8, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true,
         isInfantry: true, maxMedkits: 5, healAmount: 5 
     },
     U_MINER: { 
-        id: 'u-miner', name: "Минёр (U)", imgSrc: "./images/team-u-miner.png", 
+        id: 'u-miner', name: "Минёр", imgSrc: "./images/team-u-miner.png", 
         cost: 100, maxHp: 8, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true,
         isInfantry: true, maxMines: 3, mineDamage: 12 
     },
@@ -122,12 +122,12 @@ const UNIT_TYPES = {
         cost: 150, maxHp: 15, attack: 8, attackRange: 4, moveRange: 4, visionRange: 5, canCapture: true, isInfantry: true 
     },
     U_SNIPER: { 
-        id: 'u-sniper', name: "Снайпер (U)", imgSrc: "./images/team-u-sniper.png", 
+        id: 'u-sniper', name: "Снайпер", imgSrc: "./images/team-u-sniper.png", 
         cost: 175, maxHp: 8, attack: 8, attackRange: 5, moveRange: 2, visionRange: 6, canCapture: true, isInfantry: true 
     },
 
     U_TRANSPORT: { 
-        id: 'u-transport', name: "Хамви", imgSrc: "./images/team-u-peh.png", 
+        id: 'u-transport', name: "Транспортник", imgSrc: "./images/team-u-peh.png", 
         cost: 60, maxHp: 8, attack: 0, attackRange: 0, moveRange: 7, visionRange: 4, canCapture: false, 
         isArmor: true, transportCapacity: 2 
     },
@@ -141,7 +141,7 @@ const UNIT_TYPES = {
         cost: 350, maxHp: 50, attack: 12, attackRange: 3, moveRange: 4, visionRange: 5, canCapture: false, isArmor: true 
     },
     U_MORTAR: { 
-        id: 'u-mortar', name: "Миномёт (U)", imgSrc: "./images/team-u-minomet.png", 
+        id: 'u-mortar', name: "Миномёт", imgSrc: "./images/team-u-minomet.png", 
         cost: 150, maxHp: 10, attack: 20, attackRange: 8, moveRange: 2, visionRange: 5, canCapture: true,
         isInfantry: true, isArtillery: true, artArea: 2, artShots: 1, maxCooldown: 0 
     },
@@ -151,7 +151,7 @@ const UNIT_TYPES = {
         isArmor: true, isArtillery: true, artArea: 4, artShots: 3, maxCooldown: 4 
     },
     U_SUPPLY: { 
-        id: 'u-supply', name: "Снабжение (U)", imgSrc: "./images/team-u-suply.png", 
+        id: 'u-supply', name: "Снабжение", imgSrc: "./images/team-u-suply.png", 
         cost: 80, maxHp: 8, attack: 0, attackRange: 0, moveRange: 7, visionRange: 4, canCapture: false, maxCargo: 10 
     },
 
