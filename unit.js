@@ -100,12 +100,12 @@ const UNIT_TYPES = {
     },
     U_GRENADER: { 
         id: 'u-grenader', name: "Гренадер", imgSrc: "./images/team-u-grenader.png", 
-        cost: 60, maxHp: 18, attack: 6, attackRange: 4, moveRange: 3, visionRange: 5, canCapture: true, isInfantry: true 
+        cost: 70, maxHp: 15, attack: 6, attackRange: 4, moveRange: 3, visionRange: 5, canCapture: true, isInfantry: true 
     },
     U_RPG: { 
         id: 'u-rpg', name: "SMAW (РПГ+ПВО)", imgSrc: "./images/team-u-rpg.png", 
-        cost: 100, maxHp: 15, attack: 3, attackRange: 4, moveRange: 3, visionRange: 4, canCapture: true, 
-        isInfantry: true, bonusArmorDamage: 13, isAntiAir: true 
+        cost: 180, maxHp: 15, attack: 3, attackRange: 4, moveRange: 3, visionRange: 4, canCapture: true, 
+        isInfantry: true, bonusArmorDamage: 22, isAntiAir: true 
     },
     U_MEDIC: { 
         id: 'u-medic', name: "Медик", imgSrc: "./images/team-u-medic.png", 
