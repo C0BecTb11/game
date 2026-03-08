@@ -62,7 +62,7 @@ const ENCYCLOPEDIA_TEMPLATE = `
                     <h3>📦 Логистика</h3>
                     <ul>
                         <li><b>Медик / Минёр:</b> Имеют ограниченный запас (аптечки/мины).</li>
-                        <li><b>Пополнение:</b> Подгоните грузовик снабжения или постройте склад рядом.</li>
+                        <li><b>Пополнение:</b> Подгоните грузовик снабжения или постройте <b>Склад</b> рядом.</li>
                         <li>Кнопка <b>"🔄 Пополнить"</b> появится, если рядом есть ресурсы.</li>
                     </ul>
                 </div>
@@ -71,66 +71,86 @@ const ENCYCLOPEDIA_TEMPLATE = `
     </div>
 `;
 
-// 2. ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ (Запускается при старте игры)
+// 2. ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ
 document.addEventListener('DOMContentLoaded', () => {
-    // Вставляем HTML в конец body
     document.body.insertAdjacentHTML('beforeend', ENCYCLOPEDIA_TEMPLATE);
-    
-    // Генерируем таблицу на основе unit.js
     generateDynamicTable();
-
-    // Вешаем обработчики событий
     setupHelpButtons();
 });
 
-// 3. ГЕНЕРАЦИЯ ТАБЛИЦЫ ИЗ unit.js
+// 3. ГЕНЕРАЦИЯ ТАБЛИЦЫ (С РАЗДЕЛЕНИЕМ ПО ФРАКЦИЯМ)
 function generateDynamicTable() {
     const tbody = document.getElementById('encyclopedia-table-body');
     if (!tbody || typeof UNIT_TYPES === 'undefined') return;
 
     let html = '';
 
-    // Группировка для красоты
-    const groups = {
+    // Определяем две армии
+    const factions = [
+        {
+            name: "🔴 АРМИЯ РФ (Красные)",
+            color: "#8B0000",
+            // Фильтр: у красных ID обычные ('soldier')
+            check: (u) => !u.id.startsWith('u-') 
+        },
+        {
+            name: "🔵 АРМИЯ США (Синие)",
+            color: "#00008B",
+            // Фильтр: у синих ID начинаются с 'u-' ('u-soldier')
+            check: (u) => u.id.startsWith('u-') 
+        }
+    ];
+
+    // Группировка внутри армии
+    const subgroups = {
         'Пехота': u => u.isInfantry,
-        'Техника': u => u.isArmor || u.type === 'supply',
+        'Техника': u => (u.isArmor || u.maxCargo) && !u.isAir,
         'Авиация': u => u.isAir
     };
 
-    // Проходим по группам
-    for (let groupName in groups) {
-        html += `<tr class="row-header"><td colspan="7">${groupName}</td></tr>`;
-        
-        for (let key in UNIT_TYPES) {
-            const u = UNIT_TYPES[key];
-            if (groups[groupName](u)) {
+    factions.forEach(faction => {
+        // Заголовок Фракции
+        html += `<tr class="row-header" style="background-color: ${faction.color}; border-top: 3px solid #000;">
+                    <td colspan="7" style="text-align: center; font-size: 1.2rem; color: white;">${faction.name}</td>
+                 </tr>`;
+
+        for (let subName in subgroups) {
+            // Находим подходящие юниты
+            const units = Object.values(UNIT_TYPES).filter(u => faction.check(u) && subgroups[subName](u));
+            
+            if (units.length > 0) {
+                // Подзаголовок (Тип войск)
+                html += `<tr class="row-subheader"><td colspan="7" style="background-color: #222; color: #777; padding-left: 10px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${subName}</td></tr>`;
                 
-                // Формируем описание особенностей
-                let desc = [];
-                if (u.canCapture) desc.push("Захват");
-                if (u.bonusArmorDamage) desc.push(`Бронебой: +${u.bonusArmorDamage}`);
-                if (u.isAntiAir) desc.push("ПВО");
-                if (u.healAmount) desc.push(`Лечит (${u.healAmount})`);
-                if (u.mineDamage) desc.push(`Мины (${u.mineDamage})`);
-                if (u.transportCapacity) desc.push(`Мест: ${u.transportCapacity}`);
-                if (u.isArtillery) desc.push(`Арта (S:${u.artArea})`);
-                
-                html += `
-                    <tr>
-                        <td style="text-align: left; display: flex; align-items: center; gap: 5px;">
-                            <img src="${u.imgSrc}" width="20" height="20" style="object-fit: contain;"> ${u.name}
-                        </td>
-                        <td>${u.cost}</td>
-                        <td>${u.maxHp}</td>
-                        <td>${u.attack}</td>
-                        <td>${u.attackRange}</td>
-                        <td>${u.moveRange}</td>
-                        <td style="font-size: 0.8rem; color: #ccc;">${desc.join(', ') || '-'}</td>
-                    </tr>
-                `;
+                units.forEach(u => {
+                    let desc = [];
+                    if (u.canCapture) desc.push("Захват");
+                    if (u.bonusArmorDamage) desc.push(`Бронебой: +${u.bonusArmorDamage}`);
+                    if (u.isAntiAir) desc.push("ПВО");
+                    if (u.healAmount) desc.push(`Лечит (${u.healAmount})`);
+                    if (u.mineDamage) desc.push(`Мины (${u.mineDamage})`);
+                    if (u.transportCapacity) desc.push(`Мест: ${u.transportCapacity}`);
+                    if (u.isArtillery) desc.push(`Арта (S:${u.artArea})`);
+                    if (u.maxCargo) desc.push(`Груз: ${u.maxCargo}`);
+                    
+                    html += `
+                        <tr>
+                            <td style="text-align: left; display: flex; align-items: center; gap: 8px;">
+                                <img src="${u.imgSrc}" width="24" height="24" style="object-fit: contain; background: rgba(0,0,0,0.3); border-radius: 3px;"> 
+                                ${u.name}
+                            </td>
+                            <td style="color: #ffd700;">${u.cost}</td>
+                            <td style="color: #4caf50;">${u.maxHp}</td>
+                            <td style="color: #ff5555;">${u.attack}</td>
+                            <td style="color: #64b5f6;">${u.attackRange}</td>
+                            <td>${u.moveRange}</td>
+                            <td style="font-size: 0.75rem; color: #ccc;">${desc.join(', ') || '-'}</td>
+                        </tr>
+                    `;
+                });
             }
         }
-    }
+    });
 
     tbody.innerHTML = html;
 }
@@ -139,37 +159,29 @@ function generateDynamicTable() {
 function setupHelpButtons() {
     const modal = document.getElementById('encyclopedia-modal');
     
-    // Кнопка закрытия (крестик)
     document.getElementById('btn-close-help').onclick = () => {
         modal.classList.add('hidden');
     };
 
-    // Кнопка в Главном Меню
     const menuBtn = document.getElementById('btn-menu-help');
     if (menuBtn) menuBtn.onclick = () => modal.classList.remove('hidden');
 
-    // Кнопка внутри Игры (на верхней панели)
     const gameBtn = document.getElementById('btn-game-help');
     if (gameBtn) gameBtn.onclick = () => modal.classList.remove('hidden');
 }
 
 // 5. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
 window.switchHelpTab = function(tabId) {
-    // Скрываем все вкладки
     document.querySelectorAll('.tab-content').forEach(el => {
         el.classList.add('hidden');
         el.classList.remove('active');
     });
     
-    // Убираем подсветку кнопок
     document.querySelectorAll('.tab-link').forEach(el => el.classList.remove('active'));
 
-    // Показываем нужную
     document.getElementById(tabId).classList.remove('hidden');
     document.getElementById(tabId).classList.add('active');
 
-    // Подсвечиваем кнопку (ищем по onclick, простой хак)
     const activeBtn = document.querySelector(`button[onclick="switchHelpTab('${tabId}')"]`);
     if (activeBtn) activeBtn.classList.add('active');
 };
-  
