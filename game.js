@@ -833,10 +833,21 @@ function attackUnit(attacker, target) {
     }
 
     let targetTile = gameMap[target.y][target.x].type;
+    let attackerTile = gameMap[attacker.y][attacker.x].type; 
     let inCover = false;
+
+    // Проверяем: Цель в здании/на заводе И Цель не является техникой
+    // (То есть танки в домах не прячутся, бонус только у пехоты)
     if ((targetTile === TILES.BUILDING || targetTile === TILES.FACTORY) && !target.type.isArmor) {
-        damage = Math.max(1, damage - 2); 
-        inCover = true;
+        
+        // Проверяем: Атакующий тоже внутри?
+        let isCQB = (attackerTile === TILES.BUILDING || attackerTile === TILES.FACTORY);
+
+        // Если атакующий СНАРУЖИ (неважно кто: танк, снайпер или пулеметчик)
+        if (!isCQB) {
+            damage = Math.max(1, Math.floor(damage / 2)); // Урон делится на 2
+            inCover = true;
+        }
     }
 
     target.hp -= damage;
