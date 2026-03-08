@@ -91,7 +91,7 @@ const UNIT_TYPES = {
     // ВНИМАНИЕ: ID изменены на дефисы (u-soldier), чтобы совпадать с HTML!
 
     U_SOLDIER: { 
-        id: 'u-soldier', name: "Солдат (U)", imgSrc: "./images/taem-u-soldier.png", 
+        id: 'u-soldier', name: "Солдат (U)", imgSrc: "./images/team-u-soldier.png", 
         cost: 20, maxHp: 10, attack: 3, attackRange: 3, moveRange: 3, visionRange: 4, canCapture: true, isInfantry: true 
     },
     U_RPK: { 
