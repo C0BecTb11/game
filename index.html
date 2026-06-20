@@ -4,65 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Urban Tactics</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
     
     <div id="auth-screen" class="hidden">
-        <div class="auth-box">
-            <h1 style="text-align: center; color: #ff5555; text-shadow: 2px 2px 0px #5555ff; margin-bottom: 20px;">URBAN TACTICS</h1>
+        <div class="hud-frame">
+            <span class="hud-corner tl"></span><span class="hud-corner tr"></span>
+            <span class="hud-corner bl"></span><span class="hud-corner br"></span>
 
-            <div id="login-form">
-                <h2 style="margin-bottom: 15px; text-align: center;">Авторизация</h2>
-                <input type="text" id="login-username" class="auth-input" placeholder="Имя пользователя">
-                <input type="password" id="login-password" class="auth-input" placeholder="Пароль">
-                <button id="btn-login" class="btn-primary" style="margin-top: 10px;">Войти</button>
-                <p style="text-align: center; margin-top: 15px;">Нет аккаунта? <a href="#" id="link-to-register" style="color: #64b5f6;">Создать</a></p>
-            </div>
+            <div class="auth-box">
+                <div class="ops-eyebrow"><span class="status-dot"></span>СВЯЗЬ С КОМАНДНЫМ ЦЕНТРОМ</div>
+                <h1 class="ops-title">URBAN<span class="ops-title-split">TACTICS</span></h1>
 
-            <div id="register-form" class="hidden">
-                <h2 style="margin-bottom: 15px; text-align: center;">Регистрация</h2>
-                <input type="text" id="reg-username" class="auth-input" placeholder="Имя пользователя">
-                <input type="password" id="reg-password" class="auth-input" placeholder="Пароль (минимум 6 символов)">
-                <input type="password" id="reg-password-confirm" class="auth-input" placeholder="Повторите пароль">
-                <button id="btn-register" class="btn-primary" style="margin-top: 10px;">Зарегистрироваться</button>
-                <p style="text-align: center; margin-top: 15px;">Уже есть аккаунт? <a href="#" id="link-to-login" style="color: #64b5f6;">Войти</a></p>
+                <div id="login-form">
+                    <h2 class="ops-subtitle">Идентификация</h2>
+                    <label class="ops-label">Позывной</label>
+                    <input type="text" id="login-username" class="auth-input" placeholder="Имя пользователя">
+                    <label class="ops-label">Код доступа</label>
+                    <input type="password" id="login-password" class="auth-input" placeholder="Пароль">
+                    <button id="btn-login" class="btn-primary ops-btn" style="margin-top: 10px;">Войти в операцию</button>
+                    <p class="ops-switch">Нет позывного? <a href="#" id="link-to-register">Зарегистрироваться</a></p>
+                </div>
+
+                <div id="register-form" class="hidden">
+                    <h2 class="ops-subtitle">Регистрация позывного</h2>
+                    <label class="ops-label">Позывной</label>
+                    <input type="text" id="reg-username" class="auth-input" placeholder="Имя пользователя">
+                    <label class="ops-label">Код доступа</label>
+                    <input type="password" id="reg-password" class="auth-input" placeholder="Пароль (минимум 6 символов)">
+                    <label class="ops-label">Подтверждение</label>
+                    <input type="password" id="reg-password-confirm" class="auth-input" placeholder="Повторите пароль">
+                    <button id="btn-register" class="btn-primary ops-btn" style="margin-top: 10px;">Зарегистрироваться</button>
+                    <p class="ops-switch">Уже есть позывной? <a href="#" id="link-to-login">Войти</a></p>
+                </div>
             </div>
         </div>
     </div>
     
     <div id="main-menu">
+        <div class="ops-eyebrow main"><span class="status-dot"></span>ШТАБ ОПЕРАЦИЙ</div>
         <h1>Urban Tactics</h1>
-        <h2 id="menu-player-name" style="color: #ffaa00; margin-bottom: 10px;">Приветствую, Командир!</h2>
-        <button onclick="logout()" style="background-color: transparent; border: 1px solid #ff4444; color: #ff4444; margin-bottom: 20px;">Выйти из аккаунта</button>
+        <h2 id="menu-player-name" class="ops-greeting">Приветствую, Командир!</h2>
+        <button onclick="logout()" class="ops-logout">Выйти из аккаунта</button>
         
-        <p>Командир, подключитесь к серверу:</p>
+        <p class="ops-hint">Командир, подключитесь к серверу:</p>
 
-        <div style="border: 1px solid #115293; padding: 15px; border-radius: 8px; width: 320px; text-align: center; background-color: rgba(25, 118, 210, 0.1);">
-            <h3 style="color: #64b5f6; margin-bottom: 10px;">Онлайн игра</h3>
-            <button id="btn-create-online" class="btn-primary" style="background-color: #1976d2; border-color: #115293; width: 100%; margin-bottom: 10px;">Создать новую игру</button>
+        <div class="hud-frame online-panel">
+            <span class="hud-corner tl"></span><span class="hud-corner tr"></span>
+            <span class="hud-corner bl"></span><span class="hud-corner br"></span>
+            <h3 class="online-panel-title">Онлайн игра</h3>
+            <button id="btn-create-online" class="btn-primary online-create-btn">Создать новую игру</button>
             
-            <div style="display: flex; gap: 5px;">
-                <input type="number" id="join-lobby-id" placeholder="Код игры" style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #222; color: white;">
-                <button id="btn-join-online" style="background-color: #388e3c; border-color: #2e7d32; padding: 10px 20px; border-radius: 5px; color: white; cursor: pointer;">Войти</button>
+            <div class="join-row">
+                <input type="number" id="join-lobby-id" placeholder="Код игры" class="join-input">
+                <button id="btn-join-online" class="join-btn">Войти</button>
             </div>
         </div>
 
-        <button id="btn-menu-help" style="margin-top: 20px; background-color: #444; padding: 10px 20px; border-radius: 5px; color: white; border: 1px solid #666; cursor: pointer;">📖 Полевой Устав</button>
+        <button id="btn-menu-help" class="ops-help-btn">📖 Полевой Устав</button>
     </div>
 
-        <div id="create-game-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; display: flex; justify-content: center; align-items: center;">
-        <div style="background: #222; padding: 30px; border: 2px solid #444; border-radius: 10px; width: 400px; text-align: center;">
-            <h2 style="color: #ffaa00; margin-bottom: 20px;">НАСТРОЙКИ ОПЕРАЦИИ</h2>
+        <div id="create-game-modal" class="hidden modal-overlay">
+        <div class="hud-frame modal-card">
+            <span class="hud-corner tl"></span><span class="hud-corner tr"></span>
+            <span class="hud-corner bl"></span><span class="hud-corner br"></span>
+            <div class="ops-eyebrow"><span class="status-dot"></span>ПЛАНИРОВАНИЕ</div>
+            <h2 class="modal-title">Настройки операции</h2>
             
-            <label style="color: #ccc; display: block; margin-bottom: 5px;">Размер карты:</label>
-            <select id="setting-map-size" style="width: 100%; padding: 10px; margin-bottom: 15px; background: #333; color: white; border: 1px solid #555;">
+            <label class="ops-label">Размер карты:</label>
+            <select id="setting-map-size" class="ops-select">
                 <option value="80">Масштабная (80x80)</option>
                 <option value="50">Локальная (50x50)</option>
             </select>
 
-            <label style="color: #ccc; display: block; margin-bottom: 5px;">Режим боя:</label>
-            <select id="setting-game-mode" style="width: 100%; padding: 10px; margin-bottom: 25px; background: #333; color: white; border: 1px solid #555;">
+            <label class="ops-label">Режим боя:</label>
+            <select id="setting-game-mode" class="ops-select" style="margin-bottom: 25px;">
                 <option value="1v1">Дуэль (1 на 1)</option>
                 <option value="2v2">Командный (2 на 2)</option>
                 <option value="1v3">Герой (1 против 3)</option>
@@ -71,9 +91,9 @@
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button onclick="confirmCreateGame()" class="btn-primary" style="flex: 1;">НАЧАТЬ ОНЛАЙН</button>
                 
-                <button onclick="startOfflineTest()" style="flex: 1; background: #ff9800; border-color: #f57c00; font-weight: bold;">🛠 ТЕСТ (ОФЛАЙН)</button>
+                <button onclick="startOfflineTest()" class="ops-test-btn" style="flex: 1;">🛠 ТЕСТ (ОФЛАЙН)</button>
                 
-                <button onclick="document.getElementById('create-game-modal').classList.add('hidden')" style="background: #444; flex: 0 0 100%;">ОТМЕНА</button>
+                <button onclick="document.getElementById('create-game-modal').classList.add('hidden')" class="ops-cancel-btn" style="flex: 0 0 100%;">ОТМЕНА</button>
                         </div>
             
         </div>
